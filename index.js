@@ -9,11 +9,34 @@
 // @updateURL    https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
 // @downloadURL  https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
 // @supportURL   https://github.com/sbarrack/skribbl-community-scripts/issues
+// @grant        none
 // ==/UserScript==
 
 (function($) {
     'use strict';
 
+    setTimeout(function () {
+        initGame();
+        postImage();
+    }, 10000);
+
+    const customUI = '\
+        <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>\
+        <div id="scsCustomUi" style="display: flex; margin-bottom: 5px;">\
+            <button id="postAwe" class="btn btn-success btn-xs">\
+                Awesome Drawings\
+            </button>\
+            <button id="postSpec" class="btn btn-warning btn-xs">\
+                Guess Special\
+            </button>\
+            <button id="postShame" class="btn btn-danger btn-xs">\
+                Public Shaming\
+            </button>\
+        </div>\
+        <style>\
+            .btn-xs { margin: 5px; }\
+        </style>\
+    ';
     const channel = {
         test: 'https://discordapp.com/api/webhooks/750950778239451208/wDgMhEUTlxFjgR-4dMKK0X0Za-bdMcqPaSBnmmNFuM_Oz1MJv_Rjqbxtfj79P-waA4DX'
     }; // the channels to post it to
@@ -24,16 +47,21 @@
 
     let user = 'george'; // the image poster
     let artist = 'picasso'; // the image creator
-    let word = 'idk'; // the word, whether complete, blank, and/or with hints
     let type = 'flameo hotman'; // the type of drawing
     let drawing; // the url of the image to be posted
+    let word; // the word, whether complete, blank, and/or with hints
 
-    setTimeout(function () {
+    function initGame() {
+        document.getElementById('containerFreespace').innerHTML = customUI;
+        document.getElementById('containerFreespace').style.background = 'none';
+    }
+
+    function postImage() {
         drawing = document.getElementById('canvasGame').toDataURL().split(',')[1];
+        word = document.getElementById('currentWord').innerText; // TODO get it from packet response instead
 
         let data = new FormData();
         data.append('image', drawing);
-        // data.append('type', 'base64');
         data.append('name', Date.now() + '.png');
         data.append('title', word + ' by ' + artist);
         data.append('description', 'Posted by ' + user);
@@ -44,8 +72,6 @@
             body: data
         }).then(res => {
             res.json().then(res2 => {
-                console.log(res2);
-
                 fetch(channel.test, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -60,9 +86,9 @@
                             image: { url: res2.data.link }
                         }]
                     })
-                }).then(res => console.log(res)).catch(err => console.log(err));
-            }).catch(err => console.log(err));
-        }).catch(err => console.log(err));
-    }, 10000)
+                }).then(res => { return; }).catch(err => { return; });
+            }).catch(err => { return; });
+        }).catch(err => { return; });
+    }
 
 })(jQuery);
