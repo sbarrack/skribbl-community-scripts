@@ -1,2 +1,2 @@
 # skribbl-community-scripts
-A collection of all user scripts for Skribbl.io
+A collection of user scripts for Skribbl.io
