@@ -11,7 +11,7 @@
 // @supportURL   https://github.com/sbarrack/skribbl-community-scripts/issues
 // ==/UserScript==
 
-(function() {
+(function($) {
     'use strict';
 
     const channel = {
@@ -22,25 +22,47 @@
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d,0x63300d ];
 
-    let user; // the image poster
-    let artist; // the image creator
-    let word; // the word, whether complete, blank, and/or with hints
-    let type; // the type of drawing
+    let user = 'george'; // the image poster
+    let artist = 'picasso'; // the image creator
+    let word = 'idk'; // the word, whether complete, blank, and/or with hints
+    let type = 'flameo hotman'; // the type of drawing
     let drawing; // the url of the image to be posted
 
-    var req = new XMLHttpRequest();
-    req.open('POST', webhooks.test); // TODO change based on button clicked
-    req.setRequestHeader('Content-Type', 'application/json');
-    req.send(JSON.stringify({
-        embeds: [{
-            title: type,
-            description: word + ' by ' + artist,
-            url: 'https://stephenbarrack.com/skribbl-community-scripts/',
-            color: colors[Math.floor(Math.random() * colors.length)],
-            timestamp: new Date(),
-            footer: { text: user },
-            image: { url: drawing }
-        }]
-    }));
+    setTimeout(function () {
+        drawing = document.getElementById('canvasGame').toDataURL().split(',')[1];
 
-})();
+        let data = new FormData();
+        data.append('image', drawing);
+        // data.append('type', 'base64');
+        data.append('name', Date.now() + '.png');
+        data.append('title', word + ' by ' + artist);
+        data.append('description', 'Posted by ' + user);
+
+        fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
+            body: data
+        }).then(res => {
+            res.json().then(res2 => {
+                console.log(res2);
+
+                fetch(channel.test, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        embeds: [{
+                            title: type,
+                            description: word + ' by ' + artist + '\n' + res2.data.link,
+                            url: 'https://stephenbarrack.com/skribbl-community-scripts/',
+                            color: colors[Math.floor(Math.random() * colors.length)],
+                            timestamp: new Date(),
+                            footer: { text: user },
+                            image: { url: res2.data.link }
+                        }]
+                    })
+                }).then(res => console.log(res)).catch(err => console.log(err));
+            }).catch(err => console.log(err));
+        }).catch(err => console.log(err));
+    }, 10000)
+
+})(jQuery);
