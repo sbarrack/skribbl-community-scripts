@@ -14,6 +14,7 @@
 
 /* Credits:
     Image poster - Jess, Ente
+    Focus chat shortcut - Photon
 */
 
 (function($) {
@@ -169,6 +170,16 @@
         playersObserver.observe(document.getElementById("containerGamePlayers"), {
             childList: true
         });
+
+        // must be one of a-z or https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
+        // need event.preventDefault(); to prevent default key behavior
+        // TODO create input selection
+        document.body.onkeydown = (event) => {
+            console.log(event.key)
+            if (event.key === 'Alt') {
+                $('#inputChat').focus();
+            }
+        }
     };
 
     function postImage(channel, button) {
