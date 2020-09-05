@@ -109,8 +109,9 @@
         let elem;
         for (elem of document.getElementsByClassName('scs-post')) {
             elem.onclick = function (e) {
-                for (elem of document.getElementsByClassName('scs-post')) {
-                    elem.classList.remove('show-tooltip');
+                let elem2;
+                for (elem2 of document.getElementsByClassName('scs-post')) {
+                    elem2.classList.remove('show-tooltip');
                 }
                 postImage(channels.test, e.target);
             };
@@ -158,7 +159,7 @@
                         body: JSON.stringify({
                             embeds: [{
                                 title: channel.name,
-                                description: word + ' by ' + artist + '\n' + res2.data.link,
+                                description: word.replaceAll('_', ' \\_') + ' by ' + artist + '\n' + res2.data.link,
                                 url: 'https://stephenbarrack.com/skribbl-community-scripts/',
                                 color: colors[Math.floor(Math.random() * colors.length)],
                                 timestamp: new Date(),
