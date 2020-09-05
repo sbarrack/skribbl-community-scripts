@@ -12,6 +12,10 @@
 // @grant        none
 // ==/UserScript==
 
+/* Credits:
+    Image poster - Jess, Ente
+*/
+
 (function($) {
     'use strict';
 
@@ -19,13 +23,13 @@
     const customUI = `
         <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>
         <div id="scsCustomUi" style="display: flex; margin-bottom: 5px;">
-            <button id="postAwesome" class="btn btn-success btn-xs scs-post">
+            <button id="scsPostAwesome" class="btn btn-success btn-xs scs-post">
                 Awesome Drawings
             </button>
-            <button id="postGuess" class="btn btn-warning btn-xs scs-post">
+            <button id="scsPostGuess" class="btn btn-warning btn-xs scs-post">
                 Guess Special
             </button>
-            <button id="postShame" class="btn btn-danger btn-xs scs-post">
+            <button id="scsPostShame" class="btn btn-danger btn-xs scs-post">
                 Public Shaming
             </button>
         </div>
@@ -59,11 +63,8 @@
             }
         </style>
     `;
+
     const channels = Object.freeze({
-        test: {
-            url: 'https://discordapp.com/api/webhooks/750950778239451208/wDgMhEUTlxFjgR-4dMKK0X0Za-bdMcqPaSBnmmNFuM_Oz1MJv_Rjqbxtfj79P-waA4DX',
-            name: 'testaroo'
-        },
         awesome: {
             url: 'https://discordapp.com/api/webhooks/751460112589127730/eLakrsg55IMnhoH5Olh8znRfm5e5DdVo2dNbgR_9SqRFHl9VRnKGbM1PbTSAvjGn-knU',
             name: 'Awesome Drawing'
@@ -76,15 +77,15 @@
             url: 'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
             name: 'Public Shaming'
         }
-    }); // the channels to post it to
+    });
     const colors = Object.freeze([ 0xffffff, 0x000000, 0xc1c1c1, 0x4c4c4c, 0xef130b, 0x740b07,
         0xff7100, 0xc23800, 0xffe400, 0xe8a200, 0x00cc00, 0x005510, 0x00b2ff,
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d,0x63300d ]);
 
     var discordTag;
-    var artist = 'picasso'; // TODO the image creator
-    var word; // TODO the word, whether complete, blank, and/or with hints
+    var artist;
+    var word;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -107,39 +108,76 @@
         document.getElementById('containerFreespace').style.background = 'none';
 
         let elem;
-        for (elem of document.getElementsByClassName('scs-post')) {
-            elem.onclick = function (e) {
-                let elem2;
-                for (elem2 of document.getElementsByClassName('scs-post')) {
-                    elem2.classList.remove('show-tooltip');
-                }
-                postImage(channels.test, e.target);
-            };
-        }
+        document.getElementById('scsPostAwesome').onclick = function (e) {
+            for (elem of document.getElementsByClassName('scs-post')) {
+                elem.classList.remove('show-tooltip');
+            }
+            postImage(channels.awesome, e.target);
+        };
+        document.getElementById('scsPostGuess').onclick = function (e) {
+            for (elem of document.getElementsByClassName('scs-post')) {
+                elem.classList.remove('show-tooltip');
+            }
+            postImage(channels.guess, e.target);
+        };
+        document.getElementById('scsPostShame').onclick = function (e) {
+            for (elem of document.getElementsByClassName('scs-post')) {
+                elem.classList.remove('show-tooltip');
+            }
+            postImage(channels.shame, e.target);
+        };
 
-        // document.getElementById('postAwesome').onclick = function (e) {
-        //     for (elem of document.getElementsByClassName('scs-post')) {
-        //         elem.classList.remove('show-tooltip');
-        //     }
-        //     postImage(channels.awesome, e.target);
-        // };
-        // document.getElementById('postGuess').onclick = function (e) {
-        //     for (elem of document.getElementsByClassName('scs-post')) {
-        //         elem.classList.remove('show-tooltip');
-        //     }
-        //     postImage(channels.guess, e.target);
-        // };
-        // document.getElementById('postShaming').onclick = function (e) {
-        //     for (elem of document.getElementsByClassName('scs-post')) {
-        //         elem.classList.remove('show-tooltip');
-        //     }
-        //     postImage(channels.shame, e.target);
-        // };
+        let gameObserver = new MutationObserver(mutations => {
+            let screenGame = mutations[0].target;
+    
+            if (screenGame.style.display !== "none") {
+                let visibleDrawer = Array.from(document.querySelectorAll(".drawing")).filter(div => div.offsetParent)[0];
+                if (visibleDrawer) {
+                    artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
+                }
+            };
+        });
+        gameObserver.observe(document.getElementById('screenGame'), {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+
+        let currentDrawerObserver = new MutationObserver(mutations => {
+            let drawer = mutations[0].target;
+    
+            if (drawer.style.display !== "none") {
+                artist = drawer.closest('.player').querySelector('.name').innerHTML;
+            };
+        });
+        
+        let playersObserver = new MutationObserver(mutations => {
+            if (mutations.length > 1) {
+                document.querySelectorAll(".drawing").forEach(div => {
+                    currentDrawerObserver.observe(div, {
+                        attributes: true,
+                        attributeFilter: ['style']
+                    });
+                });
+            } else if (mutations[0].addedNodes.length > 0) {
+                let newPlayer = mutations[0].addedNodes[0];
+                currentDrawerObserver.observe(newPlayer.querySelector(".avatar .drawing"), {
+                    attributes: true,
+                    attributeFilter: ['style']
+                });
+            }
+        });
+        playersObserver.observe(document.getElementById("containerGamePlayers"), {
+            childList: true
+        });
     };
 
     function postImage(channel, button) {
         if (discordTag) {
-            word = document.getElementById('currentWord').innerText; // TODO get it from packet response instead
+            word = document.getElementById('currentWord').innerText;
+            word = word.replaceAll('_', '\\*');
+            if (channel.name === channels.guess.name) {
+                word = word.replaceAll(/[a-z,A-Z]/g, '\\*') + ' ||' + word + '||';
+            }
 
             let data = new FormData();
             data.append('image', document.getElementById('canvasGame').toDataURL().split(',')[1]);
@@ -159,7 +197,7 @@
                         body: JSON.stringify({
                             embeds: [{
                                 title: channel.name,
-                                description: word.replaceAll('_', ' \\_') + ' by ' + artist + '\n' + res2.data.link,
+                                description: word + ' by ' + artist + '\n' + res2.data.link,
                                 url: 'https://stephenbarrack.com/skribbl-community-scripts/',
                                 color: colors[Math.floor(Math.random() * colors.length)],
                                 timestamp: new Date(),
