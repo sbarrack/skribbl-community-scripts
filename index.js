@@ -21,48 +21,83 @@
     'use strict';
 
     const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
+    const keybindPanel = `
+        <div class="scsKeybinds">
+            <h4 style="text-align: center;">Don't Spell Keybinds</h4>
+            <div style="display: flex;">
+                <label>Focus chat:</label>
+                <select class="form-control" id="scsChatFocus">
+                    <option>None</option>
+                    <option>Shift</option>
+                    <option>Alt</option>
+                    <option>Ctrl</option>
+                </select>
+                <h5 style="margin-left: 10px; font-weight: bold;">+</h5>
+                <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
+            </div>
+
+            <style>
+                .scsKeybinds {
+                    background-color: #fff;
+                    border-radius: 2px;
+                    padding: 8px;
+                    margin-top: 20px;
+                }
+                .scsKeybinds label {
+                    vertical-align: middle;
+                    align-self: center;
+                    margin-bottom: 0;
+                }
+                .scsKeybinds .form-control {
+                    margin-left: 10px;
+                    width: auto;
+                }
+            </style>
+        </div>
+    `;
     const customUI = `
         <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>
         <div id="scsCustomUi" style="display: flex; margin-bottom: 5px;">
-            <button id="scsPostAwesome" class="btn btn-success btn-xs scs-post">
+            <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
                 Awesome Drawings
             </button>
-            <button id="scsPostGuess" class="btn btn-warning btn-xs scs-post">
+            <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
                 Guess Special
             </button>
-            <button id="scsPostShame" class="btn btn-danger btn-xs scs-post">
+            <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
                 Public Shaming
             </button>
+
+            <style>
+                .scsPost { margin: 5px; position: relative; }
+                .scsPost::after,
+                .scsPost::before {
+                    position: absolute;
+                    top: 100%;
+                    left: 50%;
+                    background: #333;
+                    color: white;
+                    display: none;
+                }
+                .scsPost::after {
+                    content: 'I need your Discord name to post images!';
+                    transform: translate(-50%, 5px);
+                    border-radius: 8px;
+                    width: 300px;
+                    padding: 5px;
+                }
+                .scsPost::before {
+                    content: '';
+                    transform: translate(-50%, 3px) rotateZ(45deg);
+                    width: 10px;
+                    height: 10px;
+                }
+                .scsPost.showTooltip::after,
+                .scsPost.showTooltip::before {
+                    display: block;
+                }
+            </style>
         </div>
-        <style>
-            .scs-post { margin: 5px; position: relative; }
-            .scs-post::after,
-            .scs-post::before {
-                position: absolute;
-                top: 100%;
-                left: 50%;
-                background: #333;
-                color: white;
-                display: none;
-            }
-            .scs-post::after {
-                content: 'I need your Discord name to post images!';
-                transform: translate(-50%, 5px);
-                border-radius: 8px;
-                width: 300px;
-                padding: 5px;
-            }
-            .scs-post::before {
-                content: '';
-                transform: translate(-50%, 3px) rotateZ(45deg);
-                width: 10px;
-                height: 10px;
-            }
-            .scs-post.show-tooltip::after,
-            .scs-post.show-tooltip::before {
-                display: block;
-            }
-        </style>
     `;
 
     const channels = Object.freeze({
@@ -105,25 +140,76 @@
             discordTag = event.target.value;
         };
 
+        document.querySelector('#screenLogin .loginPanelContent').outerHTML += keybindPanel; // buggy
+        document.getElementById('scsChatFocus').value = localStorage.getItem('scsChatFocus');
+        document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
+        document.getElementById('scsChatFocus2').onclick = function (event) {
+            document.addEventListener('keydown', bindKey);
+            setTimeout(function () {
+                document.removeEventListener('keydown', bindKey);
+            }, 10000);
+
+            function bindKey(e) {
+                if (e.key !== 'Escape') {
+                    localStorage.setItem('scsChatFocus2', e.key);
+                    event.target.value = e.key;
+                } else {
+                    localStorage.setItem('scsChatFocus2', '');
+                    event.target.value = '';
+                }
+
+                document.removeEventListener('keydown', bindKey);
+            }
+        };
+        document.getElementById('scsChatFocus').onchange = function (event) {
+            localStorage.setItem('scsChatFocus', event.target.value);
+        };
+
+        let chatFocusKey = localStorage.getItem('scsChatFocus2');
+        let chatModKey = localStorage.getItem('scsChatFocus');
+        document.body.onkeydown = (event) => {
+            let modKeyIsGood = true;
+            switch (chatModKey) {
+                case 'Shift':
+                    modKeyIsGood = event.shiftKey;
+                    break;
+                case 'Alt':
+                    modKeyIsGood = event.altKey;
+                    break;
+                case 'Ctrl':
+                    modKeyIsGood = event.ctrlKey;
+                    break;
+                default:
+                    break;
+            }
+            if (event.key === chatFocusKey && modKeyIsGood) {
+                event.preventDefault();
+                $('#inputChat').focus();
+            } else if (!chatFocusKey && event.key === chatModKey) {
+                event.preventDefault();
+                $('#inputChat').focus();
+            }
+        }
+
         document.getElementById('containerFreespace').innerHTML = customUI;
         document.getElementById('containerFreespace').style.background = 'none';
 
         let elem;
         document.getElementById('scsPostAwesome').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scs-post')) {
-                elem.classList.remove('show-tooltip');
+            for (elem of document.getElementsByClassName('scsPost')) {
+                elem.classList.remove('showTooltip');
             }
             postImage(channels.awesome, e.target);
         };
         document.getElementById('scsPostGuess').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scs-post')) {
-                elem.classList.remove('show-tooltip');
+            for (elem of document.getElementsByClassName('scsPost')) {
+                elem.classList.remove('showTooltip');
             }
             postImage(channels.guess, e.target);
         };
         document.getElementById('scsPostShame').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scs-post')) {
-                elem.classList.remove('show-tooltip');
+            for (elem of document.getElementsByClassName('scsPost')) {
+                elem.classList.remove('showTooltip');
             }
             postImage(channels.shame, e.target);
         };
@@ -170,16 +256,6 @@
         playersObserver.observe(document.getElementById("containerGamePlayers"), {
             childList: true
         });
-
-        // must be one of a-z or https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values
-        // need event.preventDefault(); to prevent default key behavior
-        // TODO create input selection
-        document.body.onkeydown = (event) => {
-            console.log(event.key)
-            if (event.key === 'Alt') {
-                $('#inputChat').focus();
-            }
-        }
     };
 
     function postImage(channel, button) {
@@ -220,9 +296,9 @@
                 }).catch(err => handleErr(err));
             }).catch(err => handleErr(err));
         } else {
-            button.classList.add('show-tooltip');
+            button.classList.add('showTooltip');
             setTimeout(function () {
-                button.classList.remove('show-tooltip');
+                button.classList.remove('showTooltip');
             }, 5000);
         }
     }
