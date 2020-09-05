@@ -198,7 +198,7 @@
                             embeds: [{
                                 title: channel.name,
                                 description: word + ' by ' + artist + '\n' + res2.data.link,
-                                url: 'https://stephenbarrack.com/skribbl-community-scripts/',
+                                url: 'https://github.com/sbarrack/skribbl-community-scripts/',
                                 color: colors[Math.floor(Math.random() * colors.length)],
                                 timestamp: new Date(),
                                 footer: { text: discordTag },
