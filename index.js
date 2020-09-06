@@ -22,38 +22,36 @@
 
     const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
     const keybindPanel = `
-        <div class="scsKeybinds">
-            <h4 style="text-align: center;">Don't Spell Keybinds</h4>
-            <div style="display: flex;">
-                <label>Focus chat:</label>
-                <select class="form-control" id="scsChatFocus">
-                    <option>None</option>
-                    <option>Shift</option>
-                    <option>Alt</option>
-                    <option>Ctrl</option>
-                </select>
-                <h5 style="margin-left: 10px; font-weight: bold;">+</h5>
-                <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
-            </div>
-
-            <style>
-                .scsKeybinds {
-                    background-color: #fff;
-                    border-radius: 2px;
-                    padding: 8px;
-                    margin-top: 20px;
-                }
-                .scsKeybinds label {
-                    vertical-align: middle;
-                    align-self: center;
-                    margin-bottom: 0;
-                }
-                .scsKeybinds .form-control {
-                    margin-left: 10px;
-                    width: auto;
-                }
-            </style>
+        <h4 style="text-align: center;">Don't Spell Keybinds</h4>
+        <div style="display: flex;">
+            <label>Focus chat:</label>
+            <select class="form-control" id="scsChatFocus">
+                <option>None</option>
+                <option>Shift</option>
+                <option>Alt</option>
+                <option>Ctrl</option>
+            </select>
+            <h5 style="margin-left: 10px; font-weight: bold;">+</h5>
+            <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
+
+        <style>
+            .scsKeybinds {
+                background-color: #fff;
+                border-radius: 2px;
+                padding: 8px;
+                margin-top: 20px;
+            }
+            .scsKeybinds label {
+                vertical-align: middle;
+                align-self: center;
+                margin-bottom: 0;
+            }
+            .scsKeybinds .form-control {
+                margin-left: 10px;
+                width: auto;
+            }
+        </style>
     `;
     const customUI = `
         <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>
@@ -140,9 +138,12 @@
             discordTag = event.target.value;
         };
 
-        document.querySelector('#screenLogin .loginPanelContent').outerHTML += keybindPanel; // buggy
-        document.getElementById('scsChatFocus').value = localStorage.getItem('scsChatFocus');
-        document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
+        let panelElem = document.createElement('div');
+        panelElem.classList.add('scsKeybinds');
+        panelElem.innerHTML = keybindPanel;
+        document.querySelector('#screenLogin .loginPanelContent').parentNode.append(panelElem);
+        let chatModKey = document.getElementById('scsChatFocus').value = localStorage.getItem('scsChatFocus');
+        let chatFocusKey = document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
         document.getElementById('scsChatFocus2').onclick = function (event) {
             document.addEventListener('keydown', bindKey);
             setTimeout(function () {
@@ -153,9 +154,11 @@
                 if (e.key !== 'Escape') {
                     localStorage.setItem('scsChatFocus2', e.key);
                     event.target.value = e.key;
+                    chatFocusKey = e.key;
                 } else {
                     localStorage.setItem('scsChatFocus2', '');
                     event.target.value = '';
+                    chatFocusKey = '';
                 }
 
                 document.removeEventListener('keydown', bindKey);
@@ -163,10 +166,9 @@
         };
         document.getElementById('scsChatFocus').onchange = function (event) {
             localStorage.setItem('scsChatFocus', event.target.value);
+            chatModKey = event.target.value;
         };
 
-        let chatFocusKey = localStorage.getItem('scsChatFocus2');
-        let chatModKey = localStorage.getItem('scsChatFocus');
         document.body.onkeydown = (event) => {
             let modKeyIsGood = true;
             switch (chatModKey) {
