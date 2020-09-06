@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.3
+// @version      0.4
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @license      none
@@ -12,17 +12,12 @@
 // @grant        none
 // ==/UserScript==
 
-/* Credits:
-    Image poster - Jess, Ente
-    Focus chat shortcut - Photon
-*/
-
 (function($) {
     'use strict';
 
     const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
     const keybindPanel = `
-        <h4 style="text-align: center;">Don't Spell Keybinds</h4>
+        <h4>Don't Spell Keybinds</h4>
         <div style="display: flex;">
             <label>Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
@@ -31,7 +26,7 @@
                 <option>Alt</option>
                 <option>Ctrl</option>
             </select>
-            <h5 style="margin-left: 10px; font-weight: bold;">+</h5>
+            <h5>+</h5>
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
 
@@ -42,6 +37,8 @@
                 padding: 8px;
                 margin-top: 20px;
             }
+            .scsKeybinds h4 { text-align: center; }
+            .scsKeybinds h5 { margin-left: 10px; font-weight: bold; }
             .scsKeybinds label {
                 vertical-align: middle;
                 align-self: center;
@@ -55,7 +52,7 @@
     `;
     const customUI = `
         <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>
-        <div id="scsCustomUi" style="display: flex; margin-bottom: 5px;">
+        <div id="scsCustomUi">
             <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
                 Awesome Drawings
             </button>
@@ -67,6 +64,7 @@
             </button>
 
             <style>
+                #scsCustomUi { display: flex; margin-bottom: 5px; }
                 .scsPost { margin: 5px; position: relative; }
                 .scsPost::after,
                 .scsPost::before {
@@ -128,20 +126,21 @@
     }
 
     function init() {
-        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
-        discordTag = localStorage.getItem('scsDiscord');
-        if (discordTag) {
-            document.getElementById('scsDiscord').value = discordTag;
-        }
-        document.getElementById('scsDiscord').onchange = function (event) {
-            localStorage.setItem('scsDiscord', event.target.value);
-            discordTag = event.target.value;
-        };
-
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsKeybinds');
         panelElem.innerHTML = keybindPanel;
         document.querySelector('#screenLogin .loginPanelContent').parentNode.append(panelElem);
+
+        imagePoster();
+        initChatFocus();
+        observeDrawer();
+
+        document.body.onkeydown = (event) => {
+            focusChat(event);
+        };
+    };
+
+    function initChatFocus() {
         let chatModKey = document.getElementById('scsChatFocus').value = localStorage.getItem('scsChatFocus');
         let chatFocusKey = document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
         document.getElementById('scsChatFocus2').onclick = function (event) {
@@ -168,31 +167,43 @@
             localStorage.setItem('scsChatFocus', event.target.value);
             chatModKey = event.target.value;
         };
+    }
 
-        document.body.onkeydown = (event) => {
-            let modKeyIsGood = true;
-            switch (chatModKey) {
-                case 'Shift':
-                    modKeyIsGood = event.shiftKey;
-                    break;
-                case 'Alt':
-                    modKeyIsGood = event.altKey;
-                    break;
-                case 'Ctrl':
-                    modKeyIsGood = event.ctrlKey;
-                    break;
-                default:
-                    break;
-            }
-            if (event.key === chatFocusKey && modKeyIsGood) {
-                event.preventDefault();
-                $('#inputChat').focus();
-            } else if (!chatFocusKey && event.key === chatModKey) {
-                event.preventDefault();
-                $('#inputChat').focus();
-            }
+    function focusChat(event) {
+        let modKeyIsGood = true;
+        switch (chatModKey) {
+            case 'Shift':
+                modKeyIsGood = event.shiftKey;
+                break;
+            case 'Alt':
+                modKeyIsGood = event.altKey;
+                break;
+            case 'Ctrl':
+                modKeyIsGood = event.ctrlKey;
+                break;
+            default:
+                break;
         }
+        if (event.key === chatFocusKey && modKeyIsGood) {
+            event.preventDefault();
+            $('#inputChat').focus();
+        } else if (!chatFocusKey && event.key === chatModKey) {
+            event.preventDefault();
+            $('#inputChat').focus();
+        }
+    }
 
+    function imagePoster() {
+        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
+        discordTag = localStorage.getItem('scsDiscord');
+        if (discordTag) {
+            document.getElementById('scsDiscord').value = discordTag;
+        }
+        document.getElementById('scsDiscord').onchange = function (event) {
+            localStorage.setItem('scsDiscord', event.target.value);
+            discordTag = event.target.value;
+        };
+        
         document.getElementById('containerFreespace').innerHTML = customUI;
         document.getElementById('containerFreespace').style.background = 'none';
 
@@ -215,7 +226,9 @@
             }
             postImage(channels.shame, e.target);
         };
+    }
 
+    function observeDrawer() {
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
     
@@ -258,7 +271,7 @@
         playersObserver.observe(document.getElementById("containerGamePlayers"), {
             childList: true
         });
-    };
+    }
 
     function postImage(channel, button) {
         if (discordTag) {
