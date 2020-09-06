@@ -12,18 +12,21 @@
 // @grant        none
 // ==/UserScript==
 
-/* Credits:
-    Image poster - Jess, Ente
-    Focus chat shortcut - Photon
-*/
-
 (function($) {
     'use strict';
 
     const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
     const keybindPanel = `
-        <h4 style="text-align: center;">Don't Spell Keybinds</h4>
-        <div style="display: flex;">
+        <h4>Don&rsquo;t Spell</h4>
+        <div>
+            <label>Gamemode:</label>
+            <select class="form-control" id="scsGamemode">
+                <option>None</option>
+                <option>Blind</option>
+            </select>
+        </div>
+        <h5>Keybinds</h5>
+        <div>
             <label>Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
                 <option>None</option>
@@ -31,31 +34,34 @@
                 <option>Alt</option>
                 <option>Ctrl</option>
             </select>
-            <h5 style="margin-left: 10px; font-weight: bold;">+</h5>
+            <h5 class="plus">+</h5>
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
 
         <style>
-            .scsKeybinds {
+            .scsTitleMenu {
                 background-color: #fff;
                 border-radius: 2px;
                 padding: 8px;
                 margin-top: 20px;
             }
-            .scsKeybinds label {
+            .scsTitleMenu > div { display: flex; }
+            .scsTitleMenu h4, .scsTitleMenu h5:not(.plus) { text-align: center; }
+            .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
+            .scsTitleMenu label {
                 vertical-align: middle;
                 align-self: center;
                 margin-bottom: 0;
             }
-            .scsKeybinds .form-control {
+            .scsTitleMenu .form-control {
                 margin-left: 10px;
                 width: auto;
             }
         </style>
     `;
     const customUI = `
-        <div style="text-align: center; color: white;">Don&rsquo;t Spell Menu</div>
-        <div id="scsCustomUi" style="display: flex; margin-bottom: 5px;">
+        <div style="text-align: center; color: white;">Don&rsquo;t Spell</div>
+        <div id="scsCustomUi">
             <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
                 Awesome Drawings
             </button>
@@ -67,6 +73,7 @@
             </button>
 
             <style>
+                #scsCustomUi { display: flex; margin-bottom: 5px; }
                 .scsPost { margin: 5px; position: relative; }
                 .scsPost::after,
                 .scsPost::before {
@@ -117,9 +124,7 @@
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d,0x63300d ]);
 
-    var discordTag;
-    var artist;
-    var word;
+    var discordTag, artist, word, chatModKey, chatFocusKey, currentGamemode;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -128,22 +133,37 @@
     }
 
     function init() {
-        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
-        discordTag = localStorage.getItem('scsDiscord');
-        if (discordTag) {
-            document.getElementById('scsDiscord').value = discordTag;
-        }
-        document.getElementById('scsDiscord').onchange = function (event) {
-            localStorage.setItem('scsDiscord', event.target.value);
-            discordTag = event.target.value;
-        };
-
         let panelElem = document.createElement('div');
-        panelElem.classList.add('scsKeybinds');
+        panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
         document.querySelector('#screenLogin .loginPanelContent').parentNode.append(panelElem);
-        let chatModKey = document.getElementById('scsChatFocus').value = localStorage.getItem('scsChatFocus');
-        let chatFocusKey = document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
+
+        imagePoster();
+        gamemode();
+        initChatFocus();
+        observeGame();
+
+        document.body.onkeydown = (event) => {
+            focusChat(event);
+        };
+    };
+
+    function gamemode() {
+        currentGamemode = sessionStorage.getItem('scsGamemode');
+        let gamemodeInput = document.getElementById('scsGamemode');
+        gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
+
+        gamemodeInput.onchange = function (event) {
+            sessionStorage.setItem('scsGamemode', event.target.value);
+            currentGamemode = event.target.value;
+        };
+    }
+
+    function initChatFocus() {
+        chatModKey = localStorage.getItem('scsChatFocus');
+        document.getElementById('scsChatFocus').value = chatModKey ? chatModKey : 'None';
+        chatFocusKey = document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
+
         document.getElementById('scsChatFocus2').onclick = function (event) {
             document.addEventListener('keydown', bindKey);
             setTimeout(function () {
@@ -168,30 +188,36 @@
             localStorage.setItem('scsChatFocus', event.target.value);
             chatModKey = event.target.value;
         };
+    }
 
-        document.body.onkeydown = (event) => {
-            let modKeyIsGood = true;
-            switch (chatModKey) {
-                case 'Shift':
-                    modKeyIsGood = event.shiftKey;
-                    break;
-                case 'Alt':
-                    modKeyIsGood = event.altKey;
-                    break;
-                case 'Ctrl':
-                    modKeyIsGood = event.ctrlKey;
-                    break;
-                default:
-                    break;
-            }
-            if (event.key === chatFocusKey && modKeyIsGood) {
-                event.preventDefault();
-                $('#inputChat').focus();
-            } else if (!chatFocusKey && event.key === chatModKey) {
-                event.preventDefault();
-                $('#inputChat').focus();
-            }
+    function focusChat(event) {
+        let modKeyIsGood = true;
+        if (chatModKey === 'Shift') {
+            modKeyIsGood = event.shiftKey;
+        } else if (chatModKey === 'Alt') {
+            modKeyIsGood = event.altKey;
+        } else if (chatModKey === 'Ctrl') {
+            modKeyIsGood = event.ctrlKey;
         }
+        if (event.key === chatFocusKey && modKeyIsGood) {
+            event.preventDefault();
+            $('#inputChat').focus();
+        } else if (!chatFocusKey && event.key === chatModKey) {
+            event.preventDefault();
+            $('#inputChat').focus();
+        }
+    }
+
+    function imagePoster() {
+        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
+        discordTag = localStorage.getItem('scsDiscord');
+        if (discordTag) {
+            document.getElementById('scsDiscord').value = discordTag;
+        }
+        document.getElementById('scsDiscord').onchange = function (event) {
+            localStorage.setItem('scsDiscord', event.target.value);
+            discordTag = event.target.value;
+        };
 
         document.getElementById('containerFreespace').innerHTML = customUI;
         document.getElementById('containerFreespace').style.background = 'none';
@@ -215,14 +241,22 @@
             }
             postImage(channels.shame, e.target);
         };
+    }
 
+    function observeGame() {
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
-    
+
             if (screenGame.style.display !== "none") {
                 let visibleDrawer = Array.from(document.querySelectorAll(".drawing")).filter(div => div.offsetParent)[0];
                 if (visibleDrawer) {
                     artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
+                }
+
+                if (currentGamemode === 'Blind') {
+                    document.getElementById('canvasGame').style.opacity = 0;
+                } else {
+                    document.getElementById('canvasGame').style.opacity = 1;
                 }
             };
         });
@@ -233,12 +267,12 @@
 
         let currentDrawerObserver = new MutationObserver(mutations => {
             let drawer = mutations[0].target;
-    
+
             if (drawer.style.display !== "none") {
                 artist = drawer.closest('.player').querySelector('.name').innerHTML;
             };
         });
-        
+
         let playersObserver = new MutationObserver(mutations => {
             if (mutations.length > 1) {
                 document.querySelectorAll(".drawing").forEach(div => {
@@ -258,7 +292,7 @@
         playersObserver.observe(document.getElementById("containerGamePlayers"), {
             childList: true
         });
-    };
+    }
 
     function postImage(channel, button) {
         if (discordTag) {
