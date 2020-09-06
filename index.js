@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.3
+// @version      0.4
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @license      none
@@ -100,15 +100,15 @@
 
     const channels = Object.freeze({
         awesome: {
-            url: 'https://discordapp.com/api/webhooks/751907596486836224/rnXVyqNhBNdB9uXToub2re8-vmaHdTOU_PsvarZ57dCzi4Uzz4dXwfiucIMccmm82z2V',
+            url: 'https://discordapp.com/api/webhooks/751460112589127730/eLakrsg55IMnhoH5Olh8znRfm5e5DdVo2dNbgR_9SqRFHl9VRnKGbM1PbTSAvjGn-knU',
             name: 'Awesome Drawing'
         },
         guess: {
-            url: 'https://discordapp.com/api/webhooks/751907596486836224/rnXVyqNhBNdB9uXToub2re8-vmaHdTOU_PsvarZ57dCzi4Uzz4dXwfiucIMccmm82z2V',
+            url: 'https://discordapp.com/api/webhooks/751460311713841272/zvMChva-Le1xzFeRWdTlYY8MFrihDROI8JB5FSgWO_2cT37toD-YzwQ_GVFrakARtmeW',
             name: 'Guess this Special Drawing'
         },
         shame: {
-            url: 'https://discordapp.com/api/webhooks/751907596486836224/rnXVyqNhBNdB9uXToub2re8-vmaHdTOU_PsvarZ57dCzi4Uzz4dXwfiucIMccmm82z2V',
+            url: 'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
             name: 'Public Shaming'
         }
     });
