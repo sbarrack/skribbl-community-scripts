@@ -27,6 +27,15 @@
         </div>
         <h5>Keybinds</h5>
         <div>
+            <label>Brush size:</label>
+            <select class="form-control" id="scsBrushSizeInput">
+                <option>None</option>
+                <option>1/2/3/4</option>
+                <option>Numpad 1/2/3/4</option>
+                <option>Side mouse buttons</option>
+            </select>
+        </div>
+        <div>
             <label>Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
                 <option>None</option>
@@ -124,7 +133,10 @@
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d,0x63300d ]);
 
-    var discordTag, artist, word, chatModKey, chatFocusKey, currentGamemode;
+    var discordTag, artist, word;
+    var chatModKey, chatFocusKey;
+    var currentGamemode;
+    var sizeSelection, currentBrushSize;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -145,8 +157,20 @@
 
         document.body.onkeydown = (event) => {
             focusChat(event);
+            selectBrushSize(event);
+        };
+        document.body.onmousedown = (event) => {
+            selectBrushSize(event);
         };
     };
+
+    function selectBrushSize(event) {
+        if (sizeSelection === 'Side mouse buttons') {
+            // todo start brush size on 2 by default
+        } else {
+            
+        }
+    }
 
     function gamemode() {
         currentGamemode = sessionStorage.getItem('scsGamemode');
