@@ -41,6 +41,17 @@
             <h5 class="plus">+</h5>
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
+        <div>
+            <label>Size:</label>
+            <select class="form-control" id="scsBrushSize">
+                <option>None</option>
+                <option>1/2/3/4</option>
+                <option>Num 0/1/2/3</option>
+                <option>Mouse fwd/bkwd</option>
+            </select>
+            <label style="margin-left: 10px;">Speed (ms):</label>
+            <input type="number" class="form-control" id="scsBrushSpeed" min="20" max="180000" placeholder="e.g. 200">
+        </div>
 
         <style>
             .scsTitleMenu {
