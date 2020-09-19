@@ -42,15 +42,12 @@
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
         <div>
-            <label>Size:</label>
+            <label>Brush size:</label>
             <select class="form-control" id="scsBrushSize">
                 <option>None</option>
-                <option>1/2/3/4</option>
-                <option>Num 0/1/2/3</option>
-                <option>Mouse fwd/bkwd</option>
+                <option>1-4</option>
+                <option>Numpad 1-4</option>
             </select>
-            <label style="margin-left: 10px;">Speed (ms):</label>
-            <input type="number" class="form-control" id="scsBrushSpeed" min="20" max="180000" placeholder="e.g. 200">
         </div>
 
         <style>
@@ -91,6 +88,7 @@
             </button>
 
             <style>
+                #containerBoard .containerToolbar { display: flex !important }
                 #scsCustomUi { display: flex; margin-bottom: 5px; }
                 .scsPost { margin: 5px; position: relative; }
                 .scsPost::after,
@@ -145,7 +143,7 @@
     var discordTag, artist, word;
     var chatModKey, chatFocusKey;
     var currentGamemode;
-    var sizeSelection, currentBrushSize;
+    var sizeSelection, brushSizes;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -166,22 +164,36 @@
         imagePoster();
         gamemode();
         initChatFocus();
+        initBrushSelect();
         observeGame();
 
         document.body.onkeydown = (event) => {
-            focusChat(event);
-            selectBrushSize(event);
-        };
-        document.body.onmousedown = (event) => {
-            selectBrushSize(event);
+            if (document.activeElement.id !== 'inputChat') {
+                focusChat(event);
+                selectBrushSize(event);
+            }
         };
     };
 
+    function initBrushSelect() {
+        sizeSelection = localStorage.getItem('scsBrushSize');
+        let sizeInput = document.getElementById('scsBrushSize');
+        sizeInput.value = sizeSelection ? sizeSelection : 'None';
+
+        sizeInput.onchange = function (event) {
+            localStorage.setItem('scsBrushSize', event.target.value);
+            sizeSelection = event.target.value;
+        };
+
+        brushSizes = document.querySelectorAll("[data-size]");
+    }
+
     function selectBrushSize(event) {
-        if (sizeSelection === 'Side mouse buttons') {
-            // todo start brush size on 2 by default
-        } else {
-            
+        if (!['1', '2', '3', '4'].includes(event.key)) {
+            return;
+        }
+        if ((event.getModifierState('NumLock') && sizeSelection === 'Numpad 1-4') || sizeSelection === '1-4') {
+            brushSizes[event.key - 1].click();
         }
     }
 
