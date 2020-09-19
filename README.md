@@ -5,4 +5,4 @@ A collection of user scripts for skribbl.io
 - Image poster - Jess, Ente
 - Focus chat shortcut - Photon
 - Blind gamemode - Spice
-- Brush size selection - Spice
+- Brush size & color selection - Spice

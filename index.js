@@ -48,6 +48,12 @@
                 <option>1-4</option>
                 <option>Numpad 1-4</option>
             </select>
+            <label>Brush color:</label>
+            <select class="form-control" id="scsBrushColor">
+                <option>None</option>
+                <option>0-9</option>
+                <option>Numpad 0-9</option>
+            </select>
         </div>
 
         <style>
@@ -67,6 +73,9 @@
                 vertical-align: middle;
                 align-self: center;
                 margin-bottom: 0;
+            }
+            .scsTitleMenu > div > label:nth-child(n + 1) {
+                margin-left: 10px;
             }
             .scsTitleMenu .form-control {
                 margin-left: 10px;
@@ -138,12 +147,13 @@
     const colors = Object.freeze([ 0xffffff, 0x000000, 0xc1c1c1, 0x4c4c4c, 0xef130b, 0x740b07,
         0xff7100, 0xc23800, 0xffe400, 0xe8a200, 0x00cc00, 0x005510, 0x00b2ff,
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
-        0xa0522d,0x63300d ]);
+        0xa0522d, 0x63300d ]);
 
     var discordTag, artist, word;
     var chatModKey, chatFocusKey;
     var currentGamemode;
     var sizeSelection, brushSizes;
+    var colorSelection, brushColors, lastColorIdx = 11;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -165,15 +175,58 @@
         gamemode();
         initChatFocus();
         initBrushSelect();
+        initBrushColor();
         observeGame();
 
         document.body.onkeydown = (event) => {
             if (document.activeElement.id !== 'inputChat') {
                 focusChat(event);
                 selectBrushSize(event);
+                selectBrushColor(event);
             }
         };
     };
+
+    function initBrushColor() {
+        colorSelection = localStorage.getItem('scsBrushColor');
+        let colorInput = document.getElementById('scsBrushColor');
+        colorInput.value = colorSelection ? colorSelection : 'None';
+
+        colorInput.onchange = function (event) {
+            localStorage.setItem('scsBrushColor', event.target.value);
+            colorSelection = event.target.value;
+        };
+
+        brushColors = document.querySelectorAll('[data-color]');
+    }
+
+    function selectBrushColor(event) {
+        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
+            return;
+        }
+        if ((colorSelection === '0-9' && event.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && event.code.match(/Numpad[0-9]/))) {
+            let targetColor = 11;
+            if (event.key === '0') { // monochrome
+                switch (lastColorIdx) {
+                    case 11:
+                        targetColor = 0;
+                        break;
+                    case 0:
+                        targetColor = 1;
+                        break;
+                    case 1:
+                        targetColor = 12;
+                        break;
+                }
+            } else if (lastColorIdx == +event.key + 1) {
+                targetColor = +event.key + 12;
+            } else {
+                targetColor = +event.key + 1;
+            }
+            brushColors[targetColor].click();
+            lastColorIdx = targetColor;
+        }
+    }
 
     function initBrushSelect() {
         sizeSelection = localStorage.getItem('scsBrushSize');
@@ -185,15 +238,15 @@
             sizeSelection = event.target.value;
         };
 
-        brushSizes = document.querySelectorAll("[data-size]");
+        brushSizes = document.querySelectorAll('[data-size]');
     }
 
     function selectBrushSize(event) {
         if (!['1', '2', '3', '4'].includes(event.key)) {
             return;
         }
-        if ((event.getModifierState('NumLock') && sizeSelection === 'Numpad 1-4') || sizeSelection === '1-4') {
-            brushSizes[event.key - 1].click();
+        if ((sizeSelection === '1-4' && event.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && event.code.match(/Numpad[0-9]/))) {
+            brushSizes[+event.key - 1].click();
         }
     }
 
@@ -248,12 +301,9 @@
         } else if (chatModKey === 'Ctrl') {
             modKeyIsGood = event.ctrlKey;
         }
-        if (event.key === chatFocusKey && modKeyIsGood) {
+        if ((event.key === chatFocusKey && modKeyIsGood) || (!chatFocusKey && event.key === chatModKey)) {
             event.preventDefault();
-            $('#inputChat').focus();
-        } else if (!chatFocusKey && event.key === chatModKey) {
-            event.preventDefault();
-            $('#inputChat').focus();
+            document.getElementById('inputChat').focus();
         }
     }
 
