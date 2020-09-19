@@ -15,9 +15,12 @@
 (function($) {
     'use strict';
 
-    const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
     const keybindPanel = `
         <h4>Don&rsquo;t Spell</h4>
+        <div>
+            <label>Username:</label>
+            <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
+        </div>
         <div>
             <label>Gamemode:</label>
             <select class="form-control" id="scsGamemode">
@@ -26,6 +29,7 @@
             </select>
         </div>
         <h5>Keybinds</h5>
+        <p><i>Esc</i> unbinds a key binding.</p>
         <div>
             <label>Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
@@ -44,9 +48,12 @@
                 border-radius: 2px;
                 padding: 8px;
                 margin-top: 20px;
+                margin-bottom: 20px;
             }
-            .scsTitleMenu > div { display: flex; }
-            .scsTitleMenu h4, .scsTitleMenu h5:not(.plus) { text-align: center; }
+            .scsTitleMenu > div { display: flex; margin-bottom: 10px; }
+            .scsTitleMenu > h4, .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
+            .scsTitleMenu p { font-size: 12px; }
+            .scsTitleMenu h5 { font-size: 16px; }
             .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
             .scsTitleMenu label {
                 vertical-align: middle;
@@ -124,7 +131,10 @@
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d,0x63300d ]);
 
-    var discordTag, artist, word, chatModKey, chatFocusKey, currentGamemode;
+    var discordTag, artist, word;
+    var chatModKey, chatFocusKey;
+    var currentGamemode;
+    var sizeSelection, currentBrushSize;
 
     if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
         init();
@@ -136,7 +146,11 @@
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
-        document.querySelector('#screenLogin .loginPanelContent').parentNode.append(panelElem);
+
+        let userPanel = document.querySelector('#screenLogin .loginPanelContent');
+        userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+
+        document.getElementsByClassName('login-ad')[0].remove();
 
         imagePoster();
         gamemode();
@@ -145,8 +159,20 @@
 
         document.body.onkeydown = (event) => {
             focusChat(event);
+            selectBrushSize(event);
+        };
+        document.body.onmousedown = (event) => {
+            selectBrushSize(event);
         };
     };
+
+    function selectBrushSize(event) {
+        if (sizeSelection === 'Side mouse buttons') {
+            // todo start brush size on 2 by default
+        } else {
+            
+        }
+    }
 
     function gamemode() {
         currentGamemode = sessionStorage.getItem('scsGamemode');
@@ -209,7 +235,6 @@
     }
 
     function imagePoster() {
-        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
         discordTag = localStorage.getItem('scsDiscord');
         if (discordTag) {
             document.getElementById('scsDiscord').value = discordTag;
