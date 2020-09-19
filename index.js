@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.4
+// @version      0.6
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @license      none
@@ -15,9 +15,12 @@
 (function($) {
     'use strict';
 
-    const inputName = '<input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here...">';
     const keybindPanel = `
         <h4>Don&rsquo;t Spell</h4>
+        <div>
+            <label>Username:</label>
+            <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
+        </div>
         <div>
             <label>Gamemode:</label>
             <select class="form-control" id="scsGamemode">
@@ -26,15 +29,7 @@
             </select>
         </div>
         <h5>Keybinds</h5>
-        <div>
-            <label>Brush size:</label>
-            <select class="form-control" id="scsBrushSizeInput">
-                <option>None</option>
-                <option>1/2/3/4</option>
-                <option>Numpad 1/2/3/4</option>
-                <option>Side mouse buttons</option>
-            </select>
-        </div>
+        <p><i>Esc</i> unbinds a key binding.</p>
         <div>
             <label>Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
@@ -53,9 +48,12 @@
                 border-radius: 2px;
                 padding: 8px;
                 margin-top: 20px;
+                margin-bottom: 20px;
             }
-            .scsTitleMenu > div { display: flex; }
-            .scsTitleMenu h4, .scsTitleMenu h5:not(.plus) { text-align: center; }
+            .scsTitleMenu > div { display: flex; margin-bottom: 10px; }
+            .scsTitleMenu > h4, .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
+            .scsTitleMenu p { font-size: 12px; }
+            .scsTitleMenu h5 { font-size: 16px; }
             .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
             .scsTitleMenu label {
                 vertical-align: middle;
@@ -148,7 +146,11 @@
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
-        document.querySelector('#screenLogin .loginPanelContent').parentNode.append(panelElem);
+
+        let userPanel = document.querySelector('#screenLogin .loginPanelContent');
+        userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+
+        document.getElementsByClassName('login-ad')[0].remove();
 
         imagePoster();
         gamemode();
@@ -233,7 +235,6 @@
     }
 
     function imagePoster() {
-        document.querySelector('#screenLogin .loginPanelTitle').innerHTML += inputName;
         discordTag = localStorage.getItem('scsDiscord');
         if (discordTag) {
             document.getElementById('scsDiscord').value = discordTag;
