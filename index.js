@@ -16,7 +16,7 @@
     'use strict';
 
     const keybindPanel = `
-        <h4>Don&rsquo;t Spell</h4>
+        <h4>Don't Spell</h4>
         <div>
             <label>Username:</label>
             <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
@@ -84,47 +84,28 @@
         </style>
     `;
     const customUI = `
-        <div style="text-align: center; color: white;">Don&rsquo;t Spell</div>
         <div id="scsCustomUi">
-            <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
-                Awesome Drawings
-            </button>
-            <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
-                Guess Special
-            </button>
-            <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
-                Public Shaming
-            </button>
+            <h5 style="text-align: center; color: white;">Don&rsquo;t Spell</h5>
+            <div id="scsPostWrapper" style="display: flex;" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
+                <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
+                    Awesome Drawings
+                </button>
+                <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
+                    Guess Special
+                </button>
+                <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
+                    Public Shaming
+                </button>
+            </div>
 
             <style>
                 #containerBoard .containerToolbar { display: flex !important }
-                #scsCustomUi { display: flex; margin-bottom: 5px; }
+                #scsCustomUi { color: white; }
+                #scsCustomUi > div { margin-bottom: 5px; }
                 .scsPost { margin: 5px; position: relative; }
-                .scsPost::after,
-                .scsPost::before {
-                    position: absolute;
-                    top: 100%;
-                    left: 50%;
-                    background: #333;
-                    color: white;
-                    display: none;
-                }
-                .scsPost::after {
-                    content: 'I need your Discord name to post images!';
-                    transform: translate(-50%, 5px);
-                    border-radius: 8px;
-                    width: 300px;
-                    padding: 5px;
-                }
-                .scsPost::before {
-                    content: '';
-                    transform: translate(-50%, 3px) rotateZ(45deg);
-                    width: 10px;
-                    height: 10px;
-                }
-                .scsPost.showTooltip::after,
-                .scsPost.showTooltip::before {
-                    display: block;
+                #scsPostWrapper.disabled > * {
+                    opacity: 0.7;
+                    pointer-events: none;
                 }
             </style>
         </div>
@@ -171,12 +152,12 @@
 
         document.getElementsByClassName('login-ad')[0].remove();
 
-        imagePoster();
-        gamemode();
+        initPostImage();
+        initGamemode();
         initChatFocus();
         initBrushSelect();
         initBrushColor();
-        observeGame();
+        initGameObserver();
 
         document.body.onkeydown = (event) => {
             if (document.activeElement.id !== 'inputChat') {
@@ -250,7 +231,7 @@
         }
     }
 
-    function gamemode() {
+    function initGamemode() {
         currentGamemode = sessionStorage.getItem('scsGamemode');
         let gamemodeInput = document.getElementById('scsGamemode');
         gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
@@ -307,7 +288,27 @@
         }
     }
 
-    function imagePoster() {
+    function createTooltips() {
+        let postWrapper = document.getElementById('scsPostWrapper');
+        if (postWrapper) {
+            if (!discordTag) {
+                postWrapper.setAttribute('data-toggle', 'tooltip');
+                postWrapper.setAttribute('data-placement', 'top');
+                postWrapper.setAttribute('title', 'I need your Discord username!');
+                postWrapper.classList.add('disabled');
+            } else {
+                postWrapper.removeAttribute('data-toggle');
+                postWrapper.removeAttribute('data-placement');
+                postWrapper.removeAttribute('title');
+                postWrapper.classList.remove('disabled');
+                $('#scsPostWrapper').tooltip();
+            }
+        }
+    }
+
+    function initPostImage() {
+        let postWrapper;
+
         discordTag = localStorage.getItem('scsDiscord');
         if (discordTag) {
             document.getElementById('scsDiscord').value = discordTag;
@@ -315,33 +316,39 @@
         document.getElementById('scsDiscord').onchange = function (event) {
             localStorage.setItem('scsDiscord', event.target.value);
             discordTag = event.target.value;
+            if (postWrapper) {
+                if (discordTag) {
+                    $('#scsPostWrapper').attr('title', 'Post the current image to D.S.').tooltip('fixTitle');
+                    postWrapper.classList.remove('disabled');
+                } else {
+                    $('#scsPostWrapper').attr('title', 'I need your Discord username!').tooltip('fixTitle');
+                    postWrapper.classList.add('disabled');
+                }
+            }
         };
 
         document.getElementById('containerFreespace').innerHTML = customUI;
         document.getElementById('containerFreespace').style.background = 'none';
 
-        let elem;
+        postWrapper = document.getElementById('scsPostWrapper');
+        if (postWrapper && !discordTag) {
+            postWrapper.setAttribute('title', 'I need your Discord username!');
+            postWrapper.classList.add('disabled');
+        }
+        $('#scsPostWrapper').tooltip();
+
         document.getElementById('scsPostAwesome').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.awesome, e.target);
         };
         document.getElementById('scsPostGuess').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.guess, e.target);
         };
         document.getElementById('scsPostShame').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.shame, e.target);
         };
     }
 
-    function observeGame() {
+    function initGameObserver() {
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
 
@@ -429,11 +436,6 @@
                     }).then(res => console.log(res)).catch(err => handleErr(err));
                 }).catch(err => handleErr(err));
             }).catch(err => handleErr(err));
-        } else {
-            button.classList.add('showTooltip');
-            setTimeout(function () {
-                button.classList.remove('showTooltip');
-            }, 5000);
         }
     }
 
