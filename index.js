@@ -18,11 +18,11 @@
     const keybindPanel = `
         <h4>Don't Spell</h4>
         <div>
-            <label>Username:</label>
+            <label for="scsDiscord">Username:</label>
             <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
         </div>
         <div>
-            <label>Gamemode:</label>
+            <label for="scsGamemode">Gamemode:</label>
             <select class="form-control" id="scsGamemode">
                 <option>None</option>
                 <option>Blind</option>
@@ -31,7 +31,7 @@
         <h5>Keybinds</h5>
         <p><i>Esc</i> unbinds a key binding.</p>
         <div>
-            <label>Focus chat:</label>
+            <label for="scsChatFocus">Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
                 <option>None</option>
                 <option>Shift</option>
@@ -42,13 +42,13 @@
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
         <div>
-            <label>Brush size:</label>
+            <label for="scsBrushSize">Brush size:</label>
             <select class="form-control" id="scsBrushSize">
                 <option>None</option>
                 <option>1-4</option>
                 <option>Numpad 1-4</option>
             </select>
-            <label>Brush color:</label>
+            <label for="scsBrushColor">Brush color:</label>
             <select class="form-control" id="scsBrushColor">
                 <option>None</option>
                 <option>0-9</option>
@@ -86,7 +86,7 @@
     const customUI = `
         <div id="scsCustomUi">
             <h5 style="text-align: center; color: white;">Don&rsquo;t Spell</h5>
-            <div id="scsPostWrapper" style="display: flex;" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
+            <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
                 <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
                     Awesome Drawings
                 </button>
@@ -97,11 +97,29 @@
                     Public Shaming
                 </button>
             </div>
+            <div style="align-items: center;">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="scsRainbowToggle" value="on" style="margin-top: 0;">
+                    <span>Rainbow</span>
+                </div>
+                <span style="margin: 0 10px 0;">Mode:</span>
+                <select class="form-control" id="scsRainbowMode" style="width: auto;">
+                    <option>Light</option>
+                    <option>Dark</option>
+                    <option>All</option>
+                    <option>Gray</option>
+                </select>
+            </div>
+            <div>
+                <span>Fast</span>
+                <input id="scsRainbowSpeed" class="form-control-range" type="range" min="10" max="5000" step="10" value="200" style="margin: 0 10px;">
+                <span>Slow</span>
+            </div>
 
             <style>
                 #containerBoard .containerToolbar { display: flex !important }
                 #scsCustomUi { color: white; }
-                #scsCustomUi > div { margin-bottom: 5px; }
+                #scsCustomUi > div { margin-bottom: 5px; display: flex; }
                 .scsPost { margin: 5px; position: relative; }
                 #scsPostWrapper.disabled > * {
                     opacity: 0.7;
