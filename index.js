@@ -97,23 +97,22 @@
                     Public Shaming
                 </button>
             </div>
-            <div style="align-items: center;">
+            <div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="scsRainbowToggle" value="on" style="margin-top: 0;">
+                    <input class="form-check-input" type="checkbox" id="scsRainbowToggle" style="margin-top: 0;">
                     <span>Rainbow</span>
                 </div>
-                <span style="margin: 0 10px 0;">Mode:</span>
-                <select class="form-control" id="scsRainbowMode" style="width: auto;">
+            </div>
+            <div>
+                <span style="margin-right: 10px;">Rainbow mode:</span>
+                <select class="form-control" id="scsRainbowMode" style="width: auto;" value="Light">
                     <option>Light</option>
                     <option>Dark</option>
                     <option>All</option>
                     <option>Gray</option>
                 </select>
-            </div>
-            <div>
-                <span>Fast</span>
-                <input id="scsRainbowSpeed" class="form-control-range" type="range" min="10" max="5000" step="10" value="200" style="margin: 0 10px;">
-                <span>Slow</span>
+                <span style="margin: 0 10px;">Rainbow speed (ms):</span>
+                <input type="number" id="scsRainbowSpeed" class="form-control" style="width: auto;" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
             </div>
 
             <style>
@@ -148,16 +147,17 @@
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
         0xa0522d, 0x63300d ]);
 
-    var discordTag, artist, word;
-    var chatModKey, chatFocusKey;
-    var currentGamemode;
-    var sizeSelection, brushSizes;
-    var colorSelection, brushColors, lastColorIdx = 11;
+    let discordTag, artist, word;
+    let chatModKey, chatFocusKey;
+    let currentGamemode;
+    let sizeSelection, brushSizes;
+    let colorSelection, brushColors, lastColorIdx = 11;
+    let rainbowMode;
 
-    if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
+    if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
         init();
     } else {
-        addEventListener("DOMContentLoaded", init);
+        addEventListener('DOMContentLoaded', init);
     }
 
     function init() {
@@ -175,6 +175,7 @@
         initChatFocus();
         initBrushSelect();
         initBrushColor();
+        initRainbow();
         initGameObserver();
 
         document.body.onkeydown = (event) => {
@@ -185,6 +186,51 @@
             }
         };
     };
+
+    function initRainbow() {
+        rainbowMode = localStorage.getItem('scsRainbowMode');
+        let rainbowSelect = document.getElementById('scsRainbowMode');
+        rainbowSelect.value = rainbowMode ? rainbowMode : 'Light';
+
+        rainbowSelect.onchange = function (event) {
+            localStorage.setItem('scsRainbowMode', event.target.value);
+            rainbowMode = event.target.value;
+        };
+
+        let rainbowSpeed = document.getElementById('scsRainbowSpeed');
+        let rainbowInterval;
+        document.getElementById('scsRainbowToggle').onchange = function(event) {
+            if (event.target.checked) {
+                rainbowInterval = setInterval(rainbowCycle, rainbowSpeed.value);
+            } else {
+                if (rainbowInterval) {
+                    clearInterval(rainbowInterval);
+                }
+            }
+        };
+
+        rainbowSpeed.onchange = function(event) {
+            if (rainbowInterval) {
+                clearInterval(rainbowInterval);
+                rainbowInterval = setInterval(rainbowCycle, event.target.value);
+            }
+        };
+    }
+
+    let rainbowIdx = 0;
+    const grayCycle = [0, 1, 12, 11];
+    function rainbowCycle() {
+        if (rainbowMode === 'Light') {
+            brushColors[rainbowIdx % 7 + 2].click();
+        } else if (rainbowMode === 'Dark') {
+            brushColors[rainbowIdx % 7 + 13].click();
+        } else if (rainbowMode === 'Gray') {
+            brushColors[grayCycle[rainbowIdx % 4]].click();
+        } else if (rainbowMode === 'All') {
+            brushColors[rainbowIdx % 22].click();
+        }
+        rainbowIdx += 1;
+    }
 
     function initBrushColor() {
         colorSelection = localStorage.getItem('scsBrushColor');
@@ -370,8 +416,8 @@
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
 
-            if (screenGame.style.display !== "none") {
-                let visibleDrawer = Array.from(document.querySelectorAll(".drawing")).filter(div => div.offsetParent)[0];
+            if (screenGame.style.display !== 'none') {
+                let visibleDrawer = Array.from(document.querySelectorAll('.drawing')).filter(div => div.offsetParent)[0];
                 if (visibleDrawer) {
                     artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
                 }
@@ -391,14 +437,14 @@
         let currentDrawerObserver = new MutationObserver(mutations => {
             let drawer = mutations[0].target;
 
-            if (drawer.style.display !== "none") {
+            if (drawer.style.display !== 'none') {
                 artist = drawer.closest('.player').querySelector('.name').innerHTML;
             };
         });
 
         let playersObserver = new MutationObserver(mutations => {
             if (mutations.length > 1) {
-                document.querySelectorAll(".drawing").forEach(div => {
+                document.querySelectorAll('.drawing').forEach(div => {
                     currentDrawerObserver.observe(div, {
                         attributes: true,
                         attributeFilter: ['style']
@@ -406,13 +452,13 @@
                 });
             } else if (mutations[0].addedNodes.length > 0) {
                 let newPlayer = mutations[0].addedNodes[0];
-                currentDrawerObserver.observe(newPlayer.querySelector(".avatar .drawing"), {
+                currentDrawerObserver.observe(newPlayer.querySelector('.avatar .drawing'), {
                     attributes: true,
                     attributeFilter: ['style']
                 });
             }
         });
-        playersObserver.observe(document.getElementById("containerGamePlayers"), {
+        playersObserver.observe(document.getElementById('containerGamePlayers'), {
             childList: true
         });
     }
@@ -451,14 +497,14 @@
                                 image: { url: res2.data.link }
                             }]
                         })
-                    }).then(res => console.log(res)).catch(err => handleErr(err));
+                    }).then(res => console.debug(res)).catch(err => handleErr(err));
                 }).catch(err => handleErr(err));
             }).catch(err => handleErr(err));
         }
     }
 
     function handleErr(err) {
-        console.log(err);
+        console.debug(err);
     }
 
 })(jQuery);

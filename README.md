@@ -3,6 +3,6 @@ A collection of user scripts for skribbl.io
 
 ## Credits:
 - Image poster - Jess, Ente
-- Focus chat shortcut - Photon
+- Focus chat - Photon
 - Blind gamemode - Spice
-- Brush size & color selection - Spice
+- Brush size & color - Spice
