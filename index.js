@@ -16,13 +16,13 @@
     'use strict';
 
     const keybindPanel = `
-        <h4>Don&rsquo;t Spell</h4>
+        <h4>Don't Spell</h4>
         <div>
-            <label>Username:</label>
+            <label for="scsDiscord">Username:</label>
             <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
         </div>
         <div>
-            <label>Gamemode:</label>
+            <label for="scsGamemode">Gamemode:</label>
             <select class="form-control" id="scsGamemode">
                 <option>None</option>
                 <option>Blind</option>
@@ -31,7 +31,7 @@
         <h5>Keybinds</h5>
         <p><i>Esc</i> unbinds a key binding.</p>
         <div>
-            <label>Focus chat:</label>
+            <label for="scsChatFocus">Focus chat:</label>
             <select class="form-control" id="scsChatFocus">
                 <option>None</option>
                 <option>Shift</option>
@@ -42,11 +42,17 @@
             <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
         </div>
         <div>
-            <label>Brush size:</label>
+            <label for="scsBrushSize">Brush size:</label>
             <select class="form-control" id="scsBrushSize">
                 <option>None</option>
                 <option>1-4</option>
                 <option>Numpad 1-4</option>
+            </select>
+            <label for="scsBrushColor">Brush color:</label>
+            <select class="form-control" id="scsBrushColor">
+                <option>None</option>
+                <option>0-9</option>
+                <option>Numpad 0-9</option>
             </select>
         </div>
 
@@ -68,6 +74,9 @@
                 align-self: center;
                 margin-bottom: 0;
             }
+            .scsTitleMenu > div > label:nth-child(n + 1) {
+                margin-left: 10px;
+            }
             .scsTitleMenu .form-control {
                 margin-left: 10px;
                 width: auto;
@@ -75,47 +84,45 @@
         </style>
     `;
     const customUI = `
-        <div style="text-align: center; color: white;">Don&rsquo;t Spell</div>
         <div id="scsCustomUi">
-            <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
-                Awesome Drawings
-            </button>
-            <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
-                Guess Special
-            </button>
-            <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
-                Public Shaming
-            </button>
+            <h5 style="text-align: center; color: white;">Don&rsquo;t Spell</h5>
+            <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
+                <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
+                    Awesome Drawings
+                </button>
+                <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
+                    Guess Special
+                </button>
+                <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
+                    Public Shaming
+                </button>
+            </div>
+            <div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="scsRainbowToggle" style="margin-top: 0;">
+                    <span>Rainbow</span>
+                </div>
+            </div>
+            <div>
+                <span style="margin-right: 10px;">Rainbow mode:</span>
+                <select class="form-control" id="scsRainbowMode" style="width: auto;" value="Light">
+                    <option>Light</option>
+                    <option>Dark</option>
+                    <option>All</option>
+                    <option>Gray</option>
+                </select>
+                <span style="margin: 0 10px;">Rainbow speed (ms):</span>
+                <input type="number" id="scsRainbowSpeed" class="form-control" style="width: auto;" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
+            </div>
 
             <style>
                 #containerBoard .containerToolbar { display: flex !important }
-                #scsCustomUi { display: flex; margin-bottom: 5px; }
+                #scsCustomUi { color: white; }
+                #scsCustomUi > div { margin-bottom: 5px; display: flex; }
                 .scsPost { margin: 5px; position: relative; }
-                .scsPost::after,
-                .scsPost::before {
-                    position: absolute;
-                    top: 100%;
-                    left: 50%;
-                    background: #333;
-                    color: white;
-                    display: none;
-                }
-                .scsPost::after {
-                    content: 'I need your Discord name to post images!';
-                    transform: translate(-50%, 5px);
-                    border-radius: 8px;
-                    width: 300px;
-                    padding: 5px;
-                }
-                .scsPost::before {
-                    content: '';
-                    transform: translate(-50%, 3px) rotateZ(45deg);
-                    width: 10px;
-                    height: 10px;
-                }
-                .scsPost.showTooltip::after,
-                .scsPost.showTooltip::before {
-                    display: block;
+                #scsPostWrapper.disabled > * {
+                    opacity: 0.7;
+                    pointer-events: none;
                 }
             </style>
         </div>
@@ -138,17 +145,19 @@
     const colors = Object.freeze([ 0xffffff, 0x000000, 0xc1c1c1, 0x4c4c4c, 0xef130b, 0x740b07,
         0xff7100, 0xc23800, 0xffe400, 0xe8a200, 0x00cc00, 0x005510, 0x00b2ff,
         0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
-        0xa0522d,0x63300d ]);
+        0xa0522d, 0x63300d ]);
 
-    var discordTag, artist, word;
-    var chatModKey, chatFocusKey;
-    var currentGamemode;
-    var sizeSelection, brushSizes;
+    let discordTag, artist, word;
+    let chatModKey, chatFocusKey;
+    let currentGamemode;
+    let sizeSelection, brushSizes;
+    let colorSelection, brushColors, lastColorIdx = 11;
+    let rainbowMode;
 
-    if (document.readyState === "complete" || document.readyState === "loaded" || document.readyState === "interactive") {
+    if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
         init();
     } else {
-        addEventListener("DOMContentLoaded", init);
+        addEventListener('DOMContentLoaded', init);
     }
 
     function init() {
@@ -161,19 +170,108 @@
 
         document.getElementsByClassName('login-ad')[0].remove();
 
-        imagePoster();
-        gamemode();
+        initPostImage();
+        initGamemode();
         initChatFocus();
         initBrushSelect();
-        observeGame();
+        initBrushColor();
+        initRainbow();
+        initGameObserver();
 
         document.body.onkeydown = (event) => {
             if (document.activeElement.id !== 'inputChat') {
                 focusChat(event);
                 selectBrushSize(event);
+                selectBrushColor(event);
             }
         };
     };
+
+    function initRainbow() {
+        rainbowMode = localStorage.getItem('scsRainbowMode');
+        let rainbowSelect = document.getElementById('scsRainbowMode');
+        rainbowSelect.value = rainbowMode ? rainbowMode : 'Light';
+
+        rainbowSelect.onchange = function (event) {
+            localStorage.setItem('scsRainbowMode', event.target.value);
+            rainbowMode = event.target.value;
+        };
+
+        let rainbowSpeed = document.getElementById('scsRainbowSpeed');
+        let rainbowInterval;
+        document.getElementById('scsRainbowToggle').onchange = function(event) {
+            if (event.target.checked) {
+                rainbowInterval = setInterval(rainbowCycle, rainbowSpeed.value);
+            } else {
+                if (rainbowInterval) {
+                    clearInterval(rainbowInterval);
+                }
+            }
+        };
+
+        rainbowSpeed.onchange = function(event) {
+            if (rainbowInterval) {
+                clearInterval(rainbowInterval);
+                rainbowInterval = setInterval(rainbowCycle, event.target.value);
+            }
+        };
+    }
+
+    let rainbowIdx = 0;
+    const grayCycle = [0, 1, 12, 11];
+    function rainbowCycle() {
+        if (rainbowMode === 'Light') {
+            brushColors[rainbowIdx % 7 + 2].click();
+        } else if (rainbowMode === 'Dark') {
+            brushColors[rainbowIdx % 7 + 13].click();
+        } else if (rainbowMode === 'Gray') {
+            brushColors[grayCycle[rainbowIdx % 4]].click();
+        } else if (rainbowMode === 'All') {
+            brushColors[rainbowIdx % 22].click();
+        }
+        rainbowIdx += 1;
+    }
+
+    function initBrushColor() {
+        colorSelection = localStorage.getItem('scsBrushColor');
+        let colorInput = document.getElementById('scsBrushColor');
+        colorInput.value = colorSelection ? colorSelection : 'None';
+
+        colorInput.onchange = function (event) {
+            localStorage.setItem('scsBrushColor', event.target.value);
+            colorSelection = event.target.value;
+        };
+
+        brushColors = document.querySelectorAll('[data-color]');
+    }
+
+    function selectBrushColor(event) {
+        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
+            return;
+        }
+        if ((colorSelection === '0-9' && event.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && event.code.match(/Numpad[0-9]/))) {
+            let targetColor = 11;
+            if (event.key === '0') { // monochrome
+                switch (lastColorIdx) {
+                    case 11:
+                        targetColor = 0;
+                        break;
+                    case 0:
+                        targetColor = 1;
+                        break;
+                    case 1:
+                        targetColor = 12;
+                        break;
+                }
+            } else if (lastColorIdx == +event.key + 1) {
+                targetColor = +event.key + 12;
+            } else {
+                targetColor = +event.key + 1;
+            }
+            brushColors[targetColor].click();
+            lastColorIdx = targetColor;
+        }
+    }
 
     function initBrushSelect() {
         sizeSelection = localStorage.getItem('scsBrushSize');
@@ -185,19 +283,19 @@
             sizeSelection = event.target.value;
         };
 
-        brushSizes = document.querySelectorAll("[data-size]");
+        brushSizes = document.querySelectorAll('[data-size]');
     }
 
     function selectBrushSize(event) {
         if (!['1', '2', '3', '4'].includes(event.key)) {
             return;
         }
-        if ((event.getModifierState('NumLock') && sizeSelection === 'Numpad 1-4') || sizeSelection === '1-4') {
-            brushSizes[event.key - 1].click();
+        if ((sizeSelection === '1-4' && event.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && event.code.match(/Numpad[0-9]/))) {
+            brushSizes[+event.key - 1].click();
         }
     }
 
-    function gamemode() {
+    function initGamemode() {
         currentGamemode = sessionStorage.getItem('scsGamemode');
         let gamemodeInput = document.getElementById('scsGamemode');
         gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
@@ -248,16 +346,33 @@
         } else if (chatModKey === 'Ctrl') {
             modKeyIsGood = event.ctrlKey;
         }
-        if (event.key === chatFocusKey && modKeyIsGood) {
+        if ((event.key === chatFocusKey && modKeyIsGood) || (!chatFocusKey && event.key === chatModKey)) {
             event.preventDefault();
-            $('#inputChat').focus();
-        } else if (!chatFocusKey && event.key === chatModKey) {
-            event.preventDefault();
-            $('#inputChat').focus();
+            document.getElementById('inputChat').focus();
         }
     }
 
-    function imagePoster() {
+    function createTooltips() {
+        let postWrapper = document.getElementById('scsPostWrapper');
+        if (postWrapper) {
+            if (!discordTag) {
+                postWrapper.setAttribute('data-toggle', 'tooltip');
+                postWrapper.setAttribute('data-placement', 'top');
+                postWrapper.setAttribute('title', 'I need your Discord username!');
+                postWrapper.classList.add('disabled');
+            } else {
+                postWrapper.removeAttribute('data-toggle');
+                postWrapper.removeAttribute('data-placement');
+                postWrapper.removeAttribute('title');
+                postWrapper.classList.remove('disabled');
+                $('#scsPostWrapper').tooltip();
+            }
+        }
+    }
+
+    function initPostImage() {
+        let postWrapper;
+
         discordTag = localStorage.getItem('scsDiscord');
         if (discordTag) {
             document.getElementById('scsDiscord').value = discordTag;
@@ -265,38 +380,44 @@
         document.getElementById('scsDiscord').onchange = function (event) {
             localStorage.setItem('scsDiscord', event.target.value);
             discordTag = event.target.value;
+            if (postWrapper) {
+                if (discordTag) {
+                    $('#scsPostWrapper').attr('title', 'Post the current image to D.S.').tooltip('fixTitle');
+                    postWrapper.classList.remove('disabled');
+                } else {
+                    $('#scsPostWrapper').attr('title', 'I need your Discord username!').tooltip('fixTitle');
+                    postWrapper.classList.add('disabled');
+                }
+            }
         };
 
         document.getElementById('containerFreespace').innerHTML = customUI;
         document.getElementById('containerFreespace').style.background = 'none';
 
-        let elem;
+        postWrapper = document.getElementById('scsPostWrapper');
+        if (postWrapper && !discordTag) {
+            postWrapper.setAttribute('title', 'I need your Discord username!');
+            postWrapper.classList.add('disabled');
+        }
+        $('#scsPostWrapper').tooltip();
+
         document.getElementById('scsPostAwesome').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.awesome, e.target);
         };
         document.getElementById('scsPostGuess').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.guess, e.target);
         };
         document.getElementById('scsPostShame').onclick = function (e) {
-            for (elem of document.getElementsByClassName('scsPost')) {
-                elem.classList.remove('showTooltip');
-            }
             postImage(channels.shame, e.target);
         };
     }
 
-    function observeGame() {
+    function initGameObserver() {
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
 
-            if (screenGame.style.display !== "none") {
-                let visibleDrawer = Array.from(document.querySelectorAll(".drawing")).filter(div => div.offsetParent)[0];
+            if (screenGame.style.display !== 'none') {
+                let visibleDrawer = Array.from(document.querySelectorAll('.drawing')).filter(div => div.offsetParent)[0];
                 if (visibleDrawer) {
                     artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
                 }
@@ -316,14 +437,14 @@
         let currentDrawerObserver = new MutationObserver(mutations => {
             let drawer = mutations[0].target;
 
-            if (drawer.style.display !== "none") {
+            if (drawer.style.display !== 'none') {
                 artist = drawer.closest('.player').querySelector('.name').innerHTML;
             };
         });
 
         let playersObserver = new MutationObserver(mutations => {
             if (mutations.length > 1) {
-                document.querySelectorAll(".drawing").forEach(div => {
+                document.querySelectorAll('.drawing').forEach(div => {
                     currentDrawerObserver.observe(div, {
                         attributes: true,
                         attributeFilter: ['style']
@@ -331,13 +452,13 @@
                 });
             } else if (mutations[0].addedNodes.length > 0) {
                 let newPlayer = mutations[0].addedNodes[0];
-                currentDrawerObserver.observe(newPlayer.querySelector(".avatar .drawing"), {
+                currentDrawerObserver.observe(newPlayer.querySelector('.avatar .drawing'), {
                     attributes: true,
                     attributeFilter: ['style']
                 });
             }
         });
-        playersObserver.observe(document.getElementById("containerGamePlayers"), {
+        playersObserver.observe(document.getElementById('containerGamePlayers'), {
             childList: true
         });
     }
@@ -376,19 +497,14 @@
                                 image: { url: res2.data.link }
                             }]
                         })
-                    }).then(res => console.log(res)).catch(err => handleErr(err));
+                    }).then(res => console.debug(res)).catch(err => handleErr(err));
                 }).catch(err => handleErr(err));
             }).catch(err => handleErr(err));
-        } else {
-            button.classList.add('showTooltip');
-            setTimeout(function () {
-                button.classList.remove('showTooltip');
-            }, 5000);
         }
     }
 
     function handleErr(err) {
-        console.log(err);
+        console.debug(err);
     }
 
 })(jQuery);
