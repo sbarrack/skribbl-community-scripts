@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.8
+// @version      0.9
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @license      none
