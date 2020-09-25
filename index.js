@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.9
+// @version      0.10
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @license      none
@@ -97,32 +97,37 @@
                     Public Shaming
                 </button>
             </div>
-            <div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="scsRainbowToggle" style="margin-top: 0;">
-                    <span>Rainbow</span>
-                </div>
-            </div>
-            <div>
-                <span style="margin-right: 10px;">Rainbow mode:</span>
-                <select class="form-control" id="scsRainbowMode" style="width: auto;" value="Light">
+            <div id="scsRainbowWrapper">
+                <span>Brush mode:</span>
+                <select class="form-control" id="scsRainbowMode" value="Light">
                     <option>Light</option>
                     <option>Dark</option>
                     <option>All</option>
                     <option>Gray</option>
                 </select>
-                <span style="margin: 0 10px;">Rainbow speed (ms):</span>
-                <input type="number" id="scsRainbowSpeed" class="form-control" style="width: auto;" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
+                <span>Speed (ms):</span>
+                <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
             </div>
 
             <style>
                 #containerBoard .containerToolbar { display: flex !important }
                 #scsCustomUi { color: white; }
-                #scsCustomUi > div { margin-bottom: 5px; display: flex; }
-                .scsPost { margin: 5px; position: relative; }
+                #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+                .scsPost { position: relative; }
                 #scsPostWrapper.disabled > * {
                     opacity: 0.7;
                     pointer-events: none;
+                }
+                #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
+                #scsRainbowWrapper .form-control { width: auto; }
+
+                .containerTools .tool[data-tool="rainbow"].scsToolActive {
+                    background-color: #559105;
+                    filter: none;
+                }
+                .containerTools .tool[data-tool="rainbow"]:hover {
+                    background-color: #699b37;
+                    filter: none;
                 }
             </style>
         </div>
@@ -142,17 +147,17 @@
             name: 'Public Shaming'
         }
     });
-    const colors = Object.freeze([ 0xffffff, 0x000000, 0xc1c1c1, 0x4c4c4c, 0xef130b, 0x740b07,
-        0xff7100, 0xc23800, 0xffe400, 0xe8a200, 0x00cc00, 0x005510, 0x00b2ff,
-        0x00569e, 0x231fd3, 0x0e0865, 0xa300ba, 0x550069, 0xd37caa, 0xa75574,
-        0xa0522d, 0x63300d ]);
+    const colors = Object.freeze([
+        0xffffff, 0xc1c1c1, 0xef130b, 0xff7100, 0xffe400, 0x00cc00, 0x00b2ff, 0x231fd3, 0xa300ba, 0xd37caa, 0xa0522d,
+        0x000000, 0x4c4c4c, 0x740b07, 0xc23800, 0xe8a200, 0x005510, 0x00569e, 0x0e0865, 0x550069, 0xa75574, 0x63300d
+    ]);
 
     let discordTag, artist, word;
     let chatModKey, chatFocusKey;
     let currentGamemode;
     let sizeSelection, brushSizes;
     let colorSelection, brushColors, lastColorIdx = 11;
-    let rainbowMode;
+    let rainbowMode, rainbowTool;
 
     if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
         init();
@@ -183,11 +188,20 @@
                 focusChat(event);
                 selectBrushSize(event);
                 selectBrushColor(event);
+                toggleRainbow(event);
             }
         };
     };
 
     function initRainbow() {
+        let eraserTool = document.querySelector('[data-tool="erase"]');
+        rainbowTool = eraserTool.cloneNode(true);
+        rainbowTool.setAttribute('data-tool', 'rainbow');
+        rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
+        rainbowTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif');
+        rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
+        $(rainbowTool.firstChild).tooltip();
+
         rainbowMode = localStorage.getItem('scsRainbowMode');
         let rainbowSelect = document.getElementById('scsRainbowMode');
         rainbowSelect.value = rainbowMode ? rainbowMode : 'Light';
@@ -198,13 +212,15 @@
         };
 
         let rainbowSpeed = document.getElementById('scsRainbowSpeed');
-        let rainbowInterval;
-        document.getElementById('scsRainbowToggle').onchange = function(event) {
-            if (event.target.checked) {
+        let rainbowInterval = 0;
+        rainbowTool.onclick = function(event) {
+            rainbowTool.classList.toggle('scsToolActive');
+            if (rainbowTool.classList.contains('scsToolActive')) {
                 rainbowInterval = setInterval(rainbowCycle, rainbowSpeed.value);
             } else {
                 if (rainbowInterval) {
                     clearInterval(rainbowInterval);
+                    rainbowInterval = 0;
                 }
             }
         };
@@ -230,6 +246,12 @@
             brushColors[rainbowIdx % 22].click();
         }
         rainbowIdx += 1;
+    }
+
+    function toggleRainbow(event) {
+        if (event.key === 'r') {
+            rainbowTool.click();
+        }
     }
 
     function initBrushColor() {
@@ -349,24 +371,6 @@
         if ((event.key === chatFocusKey && modKeyIsGood) || (!chatFocusKey && event.key === chatModKey)) {
             event.preventDefault();
             document.getElementById('inputChat').focus();
-        }
-    }
-
-    function createTooltips() {
-        let postWrapper = document.getElementById('scsPostWrapper');
-        if (postWrapper) {
-            if (!discordTag) {
-                postWrapper.setAttribute('data-toggle', 'tooltip');
-                postWrapper.setAttribute('data-placement', 'top');
-                postWrapper.setAttribute('title', 'I need your Discord username!');
-                postWrapper.classList.add('disabled');
-            } else {
-                postWrapper.removeAttribute('data-toggle');
-                postWrapper.removeAttribute('data-placement');
-                postWrapper.removeAttribute('title');
-                postWrapper.classList.remove('disabled');
-                $('#scsPostWrapper').tooltip();
-            }
         }
     }
 
