@@ -16,7 +16,6 @@
     'use strict';
 
     const keybindPanel = `
-        <h4>Don't Spell</h4>
         <div>
             <label for="scsDiscord">Username:</label>
             <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
@@ -65,7 +64,7 @@
                 margin-bottom: 20px;
             }
             .scsTitleMenu > div { display: flex; margin-bottom: 10px; }
-            .scsTitleMenu > h4, .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
+            .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
             .scsTitleMenu p { font-size: 12px; }
             .scsTitleMenu h5 { font-size: 16px; }
             .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
