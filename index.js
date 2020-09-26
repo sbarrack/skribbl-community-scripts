@@ -225,6 +225,10 @@
         secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
         $(primaryActiveColor).attr('title', 'Color (T)oggle').tooltip('fixTitle');
 
+        primaryActiveColor.onclick = function (event) {
+            switchColors();
+        };
+
         let eraserTool = document.querySelector('[data-tool="erase"]');
         rainbowTool = eraserTool.cloneNode(true);
         rainbowTool.setAttribute('data-tool', 'rainbow');
@@ -265,12 +269,13 @@
     }
 
     let rainbowIdx = 0;
-    const grayCycle = [0, 1, 12, 11];
+    const grayCycle = [ 0, 1, 12, 11 ];
     function rainbowCycle() {
         if (rainbowMode === '1-color') {
-            // TODO get primary active color and alternate light and dark
+            let altColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
+            brushColors[altColorIdx >= 11 ? altColorIdx - 11 : altColorIdx + 11].click();
         } else if (rainbowMode === '2-cycle') {
-            // TODO alternate primary and secondary active colors
+            switchColors();
         } else if (rainbowMode === 'Light') {
             brushColors[rainbowIdx % 7 + 2].click();
         } else if (rainbowMode === 'Dark') {
@@ -287,10 +292,14 @@
         if (event.key === 'r') {
             rainbowTool.click();
         } else if (event.key === 't') {
-            let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
-            secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
-            brushColors[secondaryColorIdx].click();
+            switchColors();
         }
+    }
+
+    function switchColors() {
+        let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
+        secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
+        brushColors[secondaryColorIdx].click();
     }
 
     function initBrushColor() {
