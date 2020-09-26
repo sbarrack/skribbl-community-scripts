@@ -85,7 +85,6 @@
     `;
     const customUI = `
         <div id="scsCustomUi">
-            <h5 style="text-align: center; color: white;">Don&rsquo;t Spell</h5>
             <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
                 <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
                     Awesome Drawings
@@ -99,7 +98,9 @@
             </div>
             <div id="scsRainbowWrapper">
                 <span>Brush mode:</span>
-                <select class="form-control" id="scsRainbowMode" value="Light">
+                <select class="form-control" id="scsRainbowMode" value="1-color">
+                    <option>1-color</option>
+                    <option>2-cycle</option>
                     <option>Light</option>
                     <option>Dark</option>
                     <option>All</option>
@@ -129,6 +130,20 @@
                     background-color: #699b37;
                     filter: none;
                 }
+                div.colorPreview {
+                    width: 32px;
+                    height: 32px;
+                    margin-right: 24px;
+                }
+                .scsColorPreview {
+                    top: 16px;
+                    left: 16px;
+                    position: relative;
+                    width: 32px;
+                    height: 32px;
+                    z-index: -1;
+                    border-radius: 2px;
+                }
             </style>
         </div>
     `;
@@ -151,13 +166,21 @@
         0xffffff, 0xc1c1c1, 0xef130b, 0xff7100, 0xffe400, 0x00cc00, 0x00b2ff, 0x231fd3, 0xa300ba, 0xd37caa, 0xa0522d,
         0x000000, 0x4c4c4c, 0x740b07, 0xc23800, 0xe8a200, 0x005510, 0x00569e, 0x0e0865, 0x550069, 0xa75574, 0x63300d
     ]);
+    const colorsRGB = Object.freeze([
+        'rgb(255, 255, 255)', 'rgb(193, 193, 193)', 'rgb(239, 19, 11)', 'rgb(255, 113, 0)',
+        'rgb(255, 228, 0)', 'rgb(0, 204, 0)', 'rgb(0, 178, 255)', 'rgb(35, 31, 211)',
+        'rgb(163, 0, 186)', 'rgb(211, 124, 170)', 'rgb(160, 82, 45)', 'rgb(0, 0, 0)',
+        'rgb(76, 76, 76)', 'rgb(116, 11, 7)', 'rgb(194, 56, 0)', 'rgb(232, 162, 0)',
+        'rgb(0, 85, 16)', 'rgb(0, 86, 158)', 'rgb(14, 8, 101)', 'rgb(85, 0, 105)',
+        'rgb(167, 85, 116)', 'rgb(99, 48, 13)'
+    ]);
 
     let discordTag, artist, word;
     let chatModKey, chatFocusKey;
     let currentGamemode;
     let sizeSelection, brushSizes;
     let colorSelection, brushColors, lastColorIdx = 11;
-    let rainbowMode, rainbowTool;
+    let rainbowMode, rainbowTool, primaryActiveColor, secondaryActiveColor;
 
     if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
         init();
@@ -194,6 +217,18 @@
     };
 
     function initRainbow() {
+        primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
+        secondaryActiveColor = primaryActiveColor.cloneNode(true);
+        secondaryActiveColor.classList.add('scsColorPreview');
+        secondaryActiveColor.classList.remove('colorPreview');
+        secondaryActiveColor.style.backgroundColor = colorsRGB[0];
+        secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
+        $(primaryActiveColor).attr('title', 'Color (T)oggle').tooltip('fixTitle');
+
+        primaryActiveColor.onclick = function (event) {
+            switchColors();
+        };
+
         let eraserTool = document.querySelector('[data-tool="erase"]');
         rainbowTool = eraserTool.cloneNode(true);
         rainbowTool.setAttribute('data-tool', 'rainbow');
@@ -204,7 +239,7 @@
 
         rainbowMode = localStorage.getItem('scsRainbowMode');
         let rainbowSelect = document.getElementById('scsRainbowMode');
-        rainbowSelect.value = rainbowMode ? rainbowMode : 'Light';
+        rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
 
         rainbowSelect.onchange = function (event) {
             localStorage.setItem('scsRainbowMode', event.target.value);
@@ -234,9 +269,14 @@
     }
 
     let rainbowIdx = 0;
-    const grayCycle = [0, 1, 12, 11];
+    const grayCycle = [ 0, 1, 12, 11 ];
     function rainbowCycle() {
-        if (rainbowMode === 'Light') {
+        if (rainbowMode === '1-color') {
+            let altColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
+            brushColors[altColorIdx >= 11 ? altColorIdx - 11 : altColorIdx + 11].click();
+        } else if (rainbowMode === '2-cycle') {
+            switchColors();
+        } else if (rainbowMode === 'Light') {
             brushColors[rainbowIdx % 7 + 2].click();
         } else if (rainbowMode === 'Dark') {
             brushColors[rainbowIdx % 7 + 13].click();
@@ -251,7 +291,15 @@
     function toggleRainbow(event) {
         if (event.key === 'r') {
             rainbowTool.click();
+        } else if (event.key === 't') {
+            switchColors();
         }
+    }
+
+    function switchColors() {
+        let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
+        secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
+        brushColors[secondaryColorIdx].click();
     }
 
     function initBrushColor() {
