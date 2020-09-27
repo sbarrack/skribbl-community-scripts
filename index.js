@@ -229,14 +229,22 @@
         hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
         $(hatchingTool.firstChild).tooltip();
 
+        let hatchInterval = 0;
         hatchingTool.onclick = function(event) {
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
-                // use rainbowSpeed for interval
+                hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
-
+                if (hatchInterval) {
+                    clearInterval(hatchInterval);
+                    hatchInterval = 0;
+                }
             }
         };
+    }
+
+    function hatchCycle() {
+        // TODO need "second cursor"
     }
 
     function toggleHatch(event) {
