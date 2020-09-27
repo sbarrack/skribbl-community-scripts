@@ -4,7 +4,6 @@
 // @version      0.11
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
-// @license      none
 // @match        http*://skribbl.io/*
 // @updateURL    https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
 // @downloadURL  https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
@@ -83,70 +82,70 @@
             }
         </style>
     `;
-    const customUI = `
-        <div id="scsCustomUi">
-            <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
-                <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
-                    Awesome Drawings
-                </button>
-                <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
-                    Guess Special
-                </button>
-                <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
-                    Public Shaming
-                </button>
-            </div>
-            <div id="scsRainbowWrapper">
-                <span>Brush mode:</span>
-                <select class="form-control" id="scsRainbowMode" value="1-color">
-                    <option>1-color</option>
-                    <option>2-cycle</option>
-                    <option>Light</option>
-                    <option>Dark</option>
-                    <option>All</option>
-                    <option>Gray</option>
-                </select>
-                <span>Speed (ms):</span>
-                <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
-            </div>
-
-            <style>
-                #containerBoard .containerToolbar { display: flex !important }
-                #scsCustomUi { color: white; }
-                #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-                .scsPost { position: relative; }
-                #scsPostWrapper.disabled > * {
-                    opacity: 0.7;
-                    pointer-events: none;
-                }
-                #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
-                #scsRainbowWrapper .form-control { width: auto; }
-
-                .containerTools .tool[data-tool="rainbow"].scsToolActive {
-                    background-color: #559105;
-                    filter: none;
-                }
-                .containerTools .tool[data-tool="rainbow"]:hover {
-                    background-color: #699b37;
-                    filter: none;
-                }
-                div.colorPreview {
-                    width: 32px;
-                    height: 32px;
-                    margin-right: 24px;
-                }
-                .scsColorPreview {
-                    top: 16px;
-                    left: 16px;
-                    position: relative;
-                    width: 32px;
-                    height: 32px;
-                    z-index: -1;
-                    border-radius: 2px;
-                }
-            </style>
+    const customUI = `<div id="scsCustomUi">
+        <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
+            <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
+                Awesome Drawings
+            </button>
+            <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
+                Guess Special
+            </button>
+            <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
+                Public Shaming
+            </button>
         </div>
-    `;
+        <div id="scsRainbowWrapper">
+            <span>Brush mode:</span>
+            <select class="form-control" id="scsRainbowMode" value="1-color">
+                <option>1-color</option>
+                <option>2-cycle</option>
+                <option>Light</option>
+                <option>Dark</option>
+                <option>All</option>
+                <option>Gray</option>
+            </select>
+            <span>Speed (ms):</span>
+            <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
+        </div>
+
+        <style>
+            #containerBoard .containerToolbar { display: flex !important }
+            #scsCustomUi { color: white; }
+            #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+            .scsPost { position: relative; }
+            #scsPostWrapper.disabled > * {
+                opacity: 0.7;
+                pointer-events: none;
+            }
+            #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
+            #scsRainbowWrapper .form-control { width: auto; }
+            .containerTools .tool[data-tool^="scs"].scsToolActive {
+                background-color: #559105;
+                filter: none;
+            }
+            .containerTools .tool[data-tool^="scs"]:hover {
+                background-color: #699b37;
+                filter: none;
+            }
+            div.colorPreview {
+                width: 32px;
+                height: 32px;
+                margin-right: 24px;
+            }
+            .scsColorPreview {
+                top: 16px;
+                left: 16px;
+                position: relative;
+                width: 32px;
+                height: 32px;
+                z-index: -1;
+                border-radius: 2px;
+            }
+            #randomIcon {
+                display: none;
+            }
+        </style>
+    </div>`;
 
     const channels = Object.freeze({
         awesome: {
@@ -174,29 +173,35 @@
         'rgb(0, 85, 16)', 'rgb(0, 86, 158)', 'rgb(14, 8, 101)', 'rgb(85, 0, 105)',
         'rgb(167, 85, 116)', 'rgb(99, 48, 13)'
     ]);
+    
+    const hatchetAnchor = { x: null, y: null };
 
+    let lastColorIdx = 11;
+
+    let canvas;
     let discordTag, artist, word;
     let chatModKey, chatFocusKey;
     let currentGamemode;
     let sizeSelection, brushSizes;
-    let colorSelection, brushColors, lastColorIdx = 11;
-    let rainbowMode, rainbowTool, primaryActiveColor, secondaryActiveColor;
+    let colorSelection, brushColors;
+    let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
+    let hatchingTool, isHatcheting, isAnchoredToCanvas;
 
-    if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
+    if (document.readyState === 'complete') {
         init();
     } else {
-        addEventListener('DOMContentLoaded', init);
+        window.addEventListener('load', init);
     }
 
     function init() {
+        canvas = document.getElementById('canvasGame');
+
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
 
-        let userPanel = document.querySelector('#screenLogin .loginPanelContent');
+        let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
-
-        document.getElementsByClassName('login-ad')[0].remove();
 
         initPostImage();
         initGamemode();
@@ -204,6 +209,7 @@
         initBrushSelect();
         initBrushColor();
         initRainbow();
+        initHatching();
         initGameObserver();
 
         document.body.onkeydown = (event) => {
@@ -212,13 +218,87 @@
                 selectBrushSize(event);
                 selectBrushColor(event);
                 toggleRainbow(event);
+                toggleHatch(event);
             }
         };
     };
 
+    function initHatching() {
+        let eraserTool = document.querySelector('[data-tool="erase"]');
+        hatchingTool = eraserTool.cloneNode(true);
+        hatchingTool.setAttribute('data-tool', 'scsHatching');
+        hatchingTool.firstChild.setAttribute('title', '(H)atching (middle click to anchor, ESC to unanchor)');
+        hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif');
+        hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
+        $(hatchingTool.firstChild).tooltip();
+
+        let hatchInterval = 0;
+        hatchingTool.onclick = function(event) {
+            hatchingTool.classList.toggle('scsToolActive');
+            if (hatchingTool.classList.contains('scsToolActive')) {
+                hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
+            } else {
+                if (hatchInterval) {
+                    clearInterval(hatchInterval);
+                    hatchInterval = 0;
+                }
+            }
+        };
+
+        const scsAnchor = document.createElement('img');
+        scsAnchor.id = 'scsAnchor';
+        scsAnchor.style.display = 'none';
+        scsAnchor.style.position = 'absolute';
+        scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+        document.body.appendChild(scsAnchor);
+
+        document.addEventListener('mousedown', event => {
+            if (hatchingTool.classList.contains('scsToolActive')) {
+                if (event.button == 0) {
+                    isHatcheting = true;
+                } else if (event.button == 1) {
+                    Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
+                    isAnchoredToCanvas = document.elementFromPoint(event.clientX, event.clientY) === canvas;
+                    scsAnchor.style.top = (event.clientY - 4) + 'px';
+                    scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
+                    scsAnchor.style.display = 'block';
+                }
+            }
+        });
+        document.addEventListener('mouseup', event => {
+            if (hatchingTool.classList.contains('scsToolActive')) {
+                if (event.button == 0) {
+                    isHatcheting = false;
+                }
+            }
+        });
+    }
+
+    function hatchCycle() {
+        if (isHatcheting && hatchetAnchor.x && hatchetAnchor.y) {
+            document.dispatchEvent(new MouseEvent('mousemove', {
+                bubbles: true,
+                cancelable: true,
+                clientX: hatchetAnchor.x,
+                clientY: hatchetAnchor.y
+            }));
+        }
+    }
+
+    function toggleHatch(event) {
+        if (event.key === 'h') {
+            hatchingTool.click();
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            Object.assign(hatchetAnchor, { x: null, y: null });
+            scsAnchor.style.display = 'none';
+        }
+    }
+
     function initRainbow() {
         primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
-        secondaryActiveColor = primaryActiveColor.cloneNode(true);
+        secondaryActiveColor = primaryActiveColor.cloneNode();
         secondaryActiveColor.classList.add('scsColorPreview');
         secondaryActiveColor.classList.remove('colorPreview');
         secondaryActiveColor.style.backgroundColor = colorsRGB[0];
@@ -231,22 +311,13 @@
 
         let eraserTool = document.querySelector('[data-tool="erase"]');
         rainbowTool = eraserTool.cloneNode(true);
-        rainbowTool.setAttribute('data-tool', 'rainbow');
+        rainbowTool.setAttribute('data-tool', 'scsRainbow');
         rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
         rainbowTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif');
         rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
         $(rainbowTool.firstChild).tooltip();
 
-        rainbowMode = localStorage.getItem('scsRainbowMode');
-        let rainbowSelect = document.getElementById('scsRainbowMode');
-        rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
-
-        rainbowSelect.onchange = function (event) {
-            localStorage.setItem('scsRainbowMode', event.target.value);
-            rainbowMode = event.target.value;
-        };
-
-        let rainbowSpeed = document.getElementById('scsRainbowSpeed');
+        rainbowSpeed = document.getElementById('scsRainbowSpeed');
         let rainbowInterval = 0;
         rainbowTool.onclick = function(event) {
             rainbowTool.classList.toggle('scsToolActive');
@@ -258,6 +329,15 @@
                     rainbowInterval = 0;
                 }
             }
+        };
+
+        rainbowMode = localStorage.getItem('scsRainbowMode');
+        let rainbowSelect = document.getElementById('scsRainbowMode');
+        rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
+
+        rainbowSelect.onchange = function (event) {
+            localStorage.setItem('scsRainbowMode', event.target.value);
+            rainbowMode = event.target.value;
         };
 
         rainbowSpeed.onchange = function(event) {
@@ -454,13 +534,13 @@
         $('#scsPostWrapper').tooltip();
 
         document.getElementById('scsPostAwesome').onclick = function (e) {
-            postImage(channels.awesome, e.target);
+            postImage(channels.awesome);
         };
         document.getElementById('scsPostGuess').onclick = function (e) {
-            postImage(channels.guess, e.target);
+            postImage(channels.guess);
         };
         document.getElementById('scsPostShame').onclick = function (e) {
-            postImage(channels.shame, e.target);
+            postImage(channels.shame);
         };
     }
 
@@ -475,9 +555,9 @@
                 }
 
                 if (currentGamemode === 'Blind') {
-                    document.getElementById('canvasGame').style.opacity = 0;
+                    canvas.style.opacity = 0;
                 } else {
-                    document.getElementById('canvasGame').style.opacity = 1;
+                    canvas.style.opacity = 1;
                 }
             };
         });
@@ -515,7 +595,7 @@
         });
     }
 
-    function postImage(channel, button) {
+    function postImage(channel) {
         if (discordTag) {
             word = document.getElementById('currentWord').innerText;
             word = word.replaceAll('_', '\\*');
@@ -524,7 +604,7 @@
             }
 
             let data = new FormData();
-            data.append('image', document.getElementById('canvasGame').toDataURL().split(',')[1]);
+            data.append('image', canvas.toDataURL().split(',')[1]);
             data.append('name', Date.now() + '.png');
             data.append('title', word + ' by ' + artist);
             data.append('description', 'Posted by ' + discordTag);
