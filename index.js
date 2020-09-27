@@ -144,6 +144,9 @@
                     z-index: -1;
                     border-radius: 2px;
                 }
+                #randomIcon {
+                    display: none;
+                }
             </style>
         </div>
     `;
@@ -180,12 +183,13 @@
     let currentGamemode;
     let sizeSelection, brushSizes;
     let colorSelection, brushColors, lastColorIdx = 11;
-    let rainbowMode, rainbowTool, primaryActiveColor, secondaryActiveColor;
+    let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
+    let hatchingTool;
 
-    if (document.readyState === 'complete' || document.readyState === 'loaded' || document.readyState === 'interactive') {
+    if (document.readyState === 'complete') {
         init();
     } else {
-        addEventListener('DOMContentLoaded', init);
+        window.addEventListener('load', init);
     }
 
     function init() {
@@ -193,10 +197,8 @@
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
 
-        let userPanel = document.querySelector('#screenLogin .loginPanelContent');
+        let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
-
-        document.getElementsByClassName('login-ad')[0].remove();
 
         initPostImage();
         initGamemode();
@@ -204,6 +206,7 @@
         initBrushSelect();
         initBrushColor();
         initRainbow();
+        initHatching();
         initGameObserver();
 
         document.body.onkeydown = (event) => {
@@ -212,13 +215,39 @@
                 selectBrushSize(event);
                 selectBrushColor(event);
                 toggleRainbow(event);
+                toggleHatch(event);
             }
         };
     };
 
+    function initHatching() {
+        let eraserTool = document.querySelector('[data-tool="erase"]');
+        hatchingTool = eraserTool.cloneNode(true);
+        hatchingTool.setAttribute('data-tool', 'hatching');
+        hatchingTool.firstChild.setAttribute('title', '(H)atching');
+        hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatch.gif');
+        hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
+        $(hatchingTool.firstChild).tooltip();
+
+        hatchingTool.onclick = function(event) {
+            hatchingTool.classList.toggle('scsToolActive');
+            if (hatchingTool.classList.contains('scsToolActive')) {
+                // use rainbowSpeed for interval
+            } else {
+
+            }
+        };
+    }
+
+    function toggleHatch(event) {
+        if (event.key === 'h') {
+            hatchingTool.click();
+        }
+    }
+
     function initRainbow() {
         primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
-        secondaryActiveColor = primaryActiveColor.cloneNode(true);
+        secondaryActiveColor = primaryActiveColor.cloneNode();
         secondaryActiveColor.classList.add('scsColorPreview');
         secondaryActiveColor.classList.remove('colorPreview');
         secondaryActiveColor.style.backgroundColor = colorsRGB[0];
@@ -237,16 +266,7 @@
         rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
         $(rainbowTool.firstChild).tooltip();
 
-        rainbowMode = localStorage.getItem('scsRainbowMode');
-        let rainbowSelect = document.getElementById('scsRainbowMode');
-        rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
-
-        rainbowSelect.onchange = function (event) {
-            localStorage.setItem('scsRainbowMode', event.target.value);
-            rainbowMode = event.target.value;
-        };
-
-        let rainbowSpeed = document.getElementById('scsRainbowSpeed');
+        rainbowSpeed = document.getElementById('scsRainbowSpeed');
         let rainbowInterval = 0;
         rainbowTool.onclick = function(event) {
             rainbowTool.classList.toggle('scsToolActive');
@@ -258,6 +278,15 @@
                     rainbowInterval = 0;
                 }
             }
+        };
+
+        rainbowMode = localStorage.getItem('scsRainbowMode');
+        let rainbowSelect = document.getElementById('scsRainbowMode');
+        rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
+
+        rainbowSelect.onchange = function (event) {
+            localStorage.setItem('scsRainbowMode', event.target.value);
+            rainbowMode = event.target.value;
         };
 
         rainbowSpeed.onchange = function(event) {

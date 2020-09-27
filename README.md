@@ -12,3 +12,4 @@ A collection of user scripts for skribbl.io
 - Focus chat shortcut - Photon
 - Gamemodes
   - Blind mode - Spice
+- Hatching brush tool - Spice
