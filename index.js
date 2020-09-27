@@ -227,7 +227,7 @@
         let eraserTool = document.querySelector('[data-tool="erase"]');
         hatchingTool = eraserTool.cloneNode(true);
         hatchingTool.setAttribute('data-tool', 'scsHatching');
-        hatchingTool.firstChild.setAttribute('title', '(H)atching');
+        hatchingTool.firstChild.setAttribute('title', '(H)atching (middle click to anchor, ESC to unanchor)');
         hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif');
         hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
         $(hatchingTool.firstChild).tooltip();
@@ -245,14 +245,23 @@
             }
         };
 
+        const scsAnchor = document.createElement('img');
+        scsAnchor.id = 'scsAnchor';
+        scsAnchor.style.display = 'none';
+        scsAnchor.style.position = 'absolute';
+        scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+        document.body.appendChild(scsAnchor);
+
         document.addEventListener('mousedown', event => {
             if (hatchingTool.classList.contains('scsToolActive')) {
                 if (event.button == 0) {
                     isHatcheting = true;
-                } else if (event.button == 2) {
+                } else if (event.button == 1) {
                     Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
-                    isAnchoredToCanvas = document.elementFromPoint(hatchetAnchor.x, hatchetAnchor.y) === canvas;
-                    // TODO add/show crosshair for hatchetAnchor
+                    isAnchoredToCanvas = document.elementFromPoint(event.clientX, event.clientY) === canvas;
+                    scsAnchor.style.top = (event.clientY - 4) + 'px';
+                    scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
+                    scsAnchor.style.display = 'block';
                 }
             }
         });
@@ -283,7 +292,7 @@
             event.preventDefault();
             event.stopPropagation();
             Object.assign(hatchetAnchor, { x: null, y: null });
-            // TODO hide/remove crosshair for hatchetAnchor
+            scsAnchor.style.display = 'none';
         }
     }
 
