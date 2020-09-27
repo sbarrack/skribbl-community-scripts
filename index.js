@@ -122,11 +122,11 @@
                 #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
                 #scsRainbowWrapper .form-control { width: auto; }
 
-                .containerTools .tool[data-tool="rainbow"].scsToolActive {
+                .containerTools .tool[data-tool^="scs"].scsToolActive {
                     background-color: #559105;
                     filter: none;
                 }
-                .containerTools .tool[data-tool="rainbow"]:hover {
+                .containerTools .tool[data-tool^="scs"]:hover {
                     background-color: #699b37;
                     filter: none;
                 }
@@ -223,9 +223,9 @@
     function initHatching() {
         let eraserTool = document.querySelector('[data-tool="erase"]');
         hatchingTool = eraserTool.cloneNode(true);
-        hatchingTool.setAttribute('data-tool', 'hatching');
+        hatchingTool.setAttribute('data-tool', 'scsHatching');
         hatchingTool.firstChild.setAttribute('title', '(H)atching');
-        hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatch.gif');
+        hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif');
         hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
         $(hatchingTool.firstChild).tooltip();
 
@@ -260,7 +260,7 @@
 
         let eraserTool = document.querySelector('[data-tool="erase"]');
         rainbowTool = eraserTool.cloneNode(true);
-        rainbowTool.setAttribute('data-tool', 'rainbow');
+        rainbowTool.setAttribute('data-tool', 'scsRainbow');
         rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
         rainbowTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif');
         rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
