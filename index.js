@@ -236,8 +236,12 @@
         hatchingTool.onclick = function(event) {
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
+                if (hatchetAnchor.x && hatchetAnchor.y) {
+                    scsAnchor.style.display = 'block';
+                }
                 hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
+                scsAnchor.style.display = 'none';
                 if (hatchInterval) {
                     clearInterval(hatchInterval);
                     hatchInterval = 0;
@@ -257,11 +261,11 @@
                 if (event.button == 0) {
                     isHatcheting = true;
                 } else if (event.button == 1) {
+                    scsAnchor.style.display = 'block';
                     Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
                     isAnchoredToCanvas = document.elementFromPoint(event.clientX, event.clientY) === canvas;
                     scsAnchor.style.top = (event.clientY - 4) + 'px';
                     scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
-                    scsAnchor.style.display = 'block';
                 }
             }
         });
