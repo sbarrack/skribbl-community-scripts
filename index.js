@@ -292,7 +292,7 @@
     function toggleHatch(event) {
         if (event.key === 'h') {
             hatchingTool.click();
-        } else if (event.key === 'Escape') {
+        } else if (event.key === 'Escape' && hatchingTool.classList.contains('scsToolActive')) {
             event.preventDefault();
             event.stopPropagation();
             Object.assign(hatchetAnchor, { x: null, y: null });
