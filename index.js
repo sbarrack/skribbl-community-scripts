@@ -105,7 +105,7 @@
                 <option>Gray</option>
             </select>
             <span>Speed (ms):</span>
-            <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
+            <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
         </div>
 
         <style>
