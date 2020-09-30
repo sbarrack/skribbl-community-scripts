@@ -186,6 +186,7 @@
     let colorSelection, brushColors;
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting, isAnchoredToCanvas;
+    let pickingTool;
 
     if (document.readyState === 'complete') {
         init();
@@ -350,6 +351,13 @@
                 rainbowInterval = setInterval(rainbowCycle, event.target.value);
             }
         };
+
+        pickingTool = eraserTool.cloneNode(true);
+        pickingTool.setAttribute('data-tool', 'scsPicker');
+        pickingTool.firstChild.setAttribute('title', '(C)olor picker (middle click to pick)');
+        pickingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif');
+        pickingTool = eraserTool.parentNode.insertBefore(pickingTool, eraserTool);
+        $(pickingTool.firstChild).tooltip();
     }
 
     let rainbowIdx = 0;
