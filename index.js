@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.13
+// @version      0.14
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -625,9 +625,10 @@
                     if (typeof pallet === 'string') {
                         pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
                         localStorage.setItem('scsPallet', pallet);
-                        pallet = pallet.split(',', 22);
+                        pallet = pallet.split(',', 20);
                         let i = 21;
                         pallet.forEach((v, k, a) => {
+                            i -= i == 11 || i == 0 ? 1 : 0;
                             if (i >= 0 && v.length == 6) {
                                 brushColors[i].style.backgroundColor = '#' + v;
                                 colors[i] = parseInt(v, 16);
