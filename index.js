@@ -27,6 +27,10 @@
                 <option>Blind</option>
             </select>
         </div>
+        <div style="display: inline !important;">
+            <div style="margin-bottom: 5px;"><label for="scsPallet">Color pallet:</label></div>
+            <textarea id="scsPallet" class="form-control" maxlength="200" placeholder="Comma-separated RGB hex values (e.g. RRGGBB)..." style="width: 100%; margin: 0; max-height: 10em; min-height: 2.5em; resize: vertical;"></textarea>
+        </div>
         <h5>Keybinds</h5>
         <p><i>Esc</i> unbinds a key binding.</p>
         <div>
@@ -73,7 +77,7 @@
                 align-self: center;
                 margin-bottom: 0;
             }
-            .scsTitleMenu > div > label:nth-child(n + 1) {
+            .scsTitleMenu > div > label:nth-child(n + 2) {
                 margin-left: 10px;
             }
             .scsTitleMenu .form-control {
@@ -105,10 +109,15 @@
                 <option>Gray</option>
             </select>
             <span>Speed (ms):</span>
-            <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="100" step="10" size="4" maxlength="4">
+            <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
         </div>
 
         <style>
+            input::-webkit-outer-spin-button,
+            input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
             #containerBoard .containerToolbar { display: flex !important }
             #scsCustomUi { color: white; }
             #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
@@ -161,18 +170,18 @@
             name: 'Public Shaming'
         }
     });
-    const colors = Object.freeze([
+    const colors = [
         0xffffff, 0xc1c1c1, 0xef130b, 0xff7100, 0xffe400, 0x00cc00, 0x00b2ff, 0x231fd3, 0xa300ba, 0xd37caa, 0xa0522d,
         0x000000, 0x4c4c4c, 0x740b07, 0xc23800, 0xe8a200, 0x005510, 0x00569e, 0x0e0865, 0x550069, 0xa75574, 0x63300d
-    ]);
-    const colorsRGB = Object.freeze([
+    ];
+    const colorsRGB = [
         'rgb(255, 255, 255)', 'rgb(193, 193, 193)', 'rgb(239, 19, 11)', 'rgb(255, 113, 0)',
         'rgb(255, 228, 0)', 'rgb(0, 204, 0)', 'rgb(0, 178, 255)', 'rgb(35, 31, 211)',
         'rgb(163, 0, 186)', 'rgb(211, 124, 170)', 'rgb(160, 82, 45)', 'rgb(0, 0, 0)',
         'rgb(76, 76, 76)', 'rgb(116, 11, 7)', 'rgb(194, 56, 0)', 'rgb(232, 162, 0)',
         'rgb(0, 85, 16)', 'rgb(0, 86, 158)', 'rgb(14, 8, 101)', 'rgb(85, 0, 105)',
         'rgb(167, 85, 116)', 'rgb(99, 48, 13)'
-    ]);
+    ];
     
     const hatchetAnchor = { x: null, y: null };
 
@@ -185,7 +194,9 @@
     let sizeSelection, brushSizes;
     let colorSelection, brushColors;
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
-    let hatchingTool, isHatcheting, isAnchoredToCanvas;
+    let hatchingTool, isHatcheting;
+    let pickingTool;
+    let pallet;
 
     if (document.readyState === 'complete') {
         init();
@@ -210,6 +221,7 @@
         initBrushColor();
         initRainbow();
         initHatching();
+        initPallet();
         initGameObserver();
 
         document.body.onkeydown = (event) => {
@@ -223,6 +235,19 @@
         };
     };
 
+    function initPallet() {
+        pallet = localStorage.getItem('scsPallet');
+        let palletInput = document.getElementById('scsPallet');
+        if (pallet) {
+            palletInput.value = pallet;
+        }
+
+        palletInput.onchange = function (event) {
+            localStorage.setItem('scsPallet', event.target.value);
+            pallet = event.target.value;
+        };
+    }
+
     function initHatching() {
         let eraserTool = document.querySelector('[data-tool="erase"]');
         hatchingTool = eraserTool.cloneNode(true);
@@ -234,8 +259,12 @@
 
         let hatchInterval = 0;
         hatchingTool.onclick = function(event) {
+            pickingTool.classList.remove('scsToolActive');
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
+                if (hatchetAnchor.x && hatchetAnchor.y) {
+                    scsAnchor.style.display = 'block';
+                }
                 hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
                 if (hatchInterval) {
@@ -257,11 +286,10 @@
                 if (event.button == 0) {
                     isHatcheting = true;
                 } else if (event.button == 1) {
+                    scsAnchor.style.display = 'block';
                     Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
-                    isAnchoredToCanvas = document.elementFromPoint(event.clientX, event.clientY) === canvas;
                     scsAnchor.style.top = (event.clientY - 4) + 'px';
                     scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
-                    scsAnchor.style.display = 'block';
                 }
             }
         });
@@ -288,7 +316,7 @@
     function toggleHatch(event) {
         if (event.key === 'h') {
             hatchingTool.click();
-        } else if (event.key === 'Escape') {
+        } else if (event.key === 'Escape' && hatchingTool.classList.contains('scsToolActive')) {
             event.preventDefault();
             event.stopPropagation();
             Object.assign(hatchetAnchor, { x: null, y: null });
@@ -346,6 +374,35 @@
                 rainbowInterval = setInterval(rainbowCycle, event.target.value);
             }
         };
+
+        pickingTool = eraserTool.cloneNode(true);
+        pickingTool.setAttribute('data-tool', 'scsPicker');
+        pickingTool.firstChild.setAttribute('title', '(C)olor picker (middle click to pick)');
+        pickingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/picker.gif');
+        pickingTool = eraserTool.parentNode.insertBefore(pickingTool, eraserTool);
+        $(pickingTool.firstChild).tooltip();
+
+        pickingTool.onclick = function(event) {
+            hatchingTool.classList.remove('scsToolActive');
+            scsAnchor.style.display = 'none';
+            pickingTool.classList.toggle('scsToolActive');
+        };
+
+        canvas.addEventListener('mousedown', event => {
+            if (pickingTool.classList.contains('scsToolActive')) {
+                if (event.button == 1) {
+                    let rect = canvas.getBoundingClientRect();
+                    let color = Uint32Array.from(canvas.getContext('2d').getImageData(
+                        Math.floor((event.clientX - rect.x) / rect.width * canvas.width),
+                        Math.floor((event.clientY - rect.y) / rect.height * canvas.height),
+                        1, 1).data);
+                    let pickIdx = colors.indexOf(color[0] << 16 | color[1] << 8 | color[2]);
+                    if (pickIdx != -1) {
+                        brushColors[pickIdx].click();
+                    }
+                }
+            }
+        });
     }
 
     let rainbowIdx = 0;
@@ -373,6 +430,10 @@
             rainbowTool.click();
         } else if (event.key === 't') {
             switchColors();
+        } else if (event.key === 'c') {
+            event.preventDefault();
+            event.stopPropagation();
+            pickingTool.click();
         }
     }
 
@@ -558,6 +619,26 @@
                     canvas.style.opacity = 0;
                 } else {
                     canvas.style.opacity = 1;
+                }
+
+                if (pallet) {
+                    if (typeof pallet === 'string') {
+                        pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
+                        localStorage.setItem('scsPallet', pallet);
+                        pallet = pallet.split(',', 22);
+                        let i = 21;
+                        pallet.forEach((v, k, a) => {
+                            if (i >= 0 && v.length == 6) {
+                                brushColors[i].style.backgroundColor = '#' + v;
+                                colors[i] = parseInt(v, 16);
+                                colorsRGB[i--] = 'rgb(' + [ 
+                                    parseInt(v.substr(0, 2), 16).toString(10),
+                                    parseInt(v.substr(2, 2), 16).toString(10),
+                                    parseInt(v.substr(4, 2), 16).toString(10)
+                                ].join(', ') + ')';
+                            }
+                        });
+                    }
                 }
             };
         });
