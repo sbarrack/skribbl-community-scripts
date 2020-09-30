@@ -109,6 +109,11 @@
         </div>
 
         <style>
+            input::-webkit-outer-spin-button,
+            input::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
             #containerBoard .containerToolbar { display: flex !important }
             #scsCustomUi { color: white; }
             #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
@@ -185,7 +190,7 @@
     let sizeSelection, brushSizes;
     let colorSelection, brushColors;
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
-    let hatchingTool, isHatcheting, isAnchoredToCanvas;
+    let hatchingTool, isHatcheting;
     let pickingTool;
 
     if (document.readyState === 'complete') {
@@ -235,6 +240,7 @@
 
         let hatchInterval = 0;
         hatchingTool.onclick = function(event) {
+            pickingTool.classList.remove('scsToolActive');
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
                 if (hatchetAnchor.x && hatchetAnchor.y) {
@@ -242,7 +248,6 @@
                 }
                 hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
-                scsAnchor.style.display = 'none';
                 if (hatchInterval) {
                     clearInterval(hatchInterval);
                     hatchInterval = 0;
@@ -264,7 +269,6 @@
                 } else if (event.button == 1) {
                     scsAnchor.style.display = 'block';
                     Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
-                    isAnchoredToCanvas = document.elementFromPoint(event.clientX, event.clientY) === canvas;
                     scsAnchor.style.top = (event.clientY - 4) + 'px';
                     scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
                 }
@@ -355,9 +359,31 @@
         pickingTool = eraserTool.cloneNode(true);
         pickingTool.setAttribute('data-tool', 'scsPicker');
         pickingTool.firstChild.setAttribute('title', '(C)olor picker (middle click to pick)');
-        pickingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif');
+        pickingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/picker.gif');
         pickingTool = eraserTool.parentNode.insertBefore(pickingTool, eraserTool);
         $(pickingTool.firstChild).tooltip();
+
+        pickingTool.onclick = function(event) {
+            hatchingTool.classList.remove('scsToolActive');
+            scsAnchor.style.display = 'none';
+            pickingTool.classList.toggle('scsToolActive');
+        };
+
+        canvas.addEventListener('mousedown', event => {
+            if (pickingTool.classList.contains('scsToolActive')) {
+                if (event.button == 1) {
+                    let rect = canvas.getBoundingClientRect();
+                    let color = Uint32Array.from(canvas.getContext('2d').getImageData(
+                        Math.floor((event.clientX - rect.x) / rect.width * canvas.width),
+                        Math.floor((event.clientY - rect.y) / rect.height * canvas.height),
+                        1, 1).data);
+                    let pickIdx = colors.indexOf(color[0] << 16 | color[1] << 8 | color[2]);
+                    if (pickIdx != -1) {
+                        brushColors[pickIdx].click();
+                    }
+                }
+            }
+        });
     }
 
     let rainbowIdx = 0;
@@ -385,6 +411,10 @@
             rainbowTool.click();
         } else if (event.key === 't') {
             switchColors();
+        } else if (event.key === 'c') {
+            event.preventDefault();
+            event.stopPropagation();
+            pickingTool.click();
         }
     }
 
