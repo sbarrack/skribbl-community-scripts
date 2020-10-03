@@ -205,7 +205,7 @@
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
     let pickingTool;
-    let pallet, palletChecked;
+    let pallet, palletCheckedInput;
 
     if (document.readyState === 'complete') {
         init();
@@ -261,11 +261,8 @@
             palletInput.value = pallet;
         }
 
-        palletChecked = localStorage.getItem('scsPalletChecked');
-        let palletCheckedInput = document.getElementById('scsPalletChecked');
-        if (palletChecked) {
-            palletCheckedInput.checked = true;
-        }
+        palletCheckedInput = document.getElementById('scsPalletChecked');
+        palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
 
         palletInput.onchange = function (event) {
             localStorage.setItem('scsPallet', event.target.value);
@@ -273,7 +270,6 @@
         };
         palletCheckedInput.onchange = function (event) {
             localStorage.setItem('scsPalletChecked', event.target.checked);
-            palletChecked = event.target.checked;
         };
     }
 
@@ -650,7 +646,7 @@
                     canvas.style.opacity = 1;
                 }
 
-                if (pallet && palletChecked) {
+                if (pallet && palletCheckedInput.checked) {
                     if (typeof pallet === 'string') {
                         pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
                         localStorage.setItem('scsPallet', pallet);
