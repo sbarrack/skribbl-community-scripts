@@ -14,6 +14,12 @@
 (function($) {
     'use strict';
 
+    const changelog = `
+        <h4>Skribbl Community Script</h4>
+        <b>Beta v0.15</b>
+        <br>
+        Introducing color pallets. Paste a comma-seperated list of RGB hex colors into the text area underneath &rdquo;Color pallet:&ldquo; and check the adjacent box to turn on/off your new colors!
+    `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
         <div>
@@ -216,6 +222,16 @@
 
         let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+
+        let updateTab = document.getElementById('collapseUpdate');
+        let changelogElem = document.createElement('div');
+        changelogElem.innerHTML = changelog;
+        changelogElem.classList.add('updateInfo');
+        let colorComponent = colorsRGB[17].slice(0, colorsRGB[17].length - 1);
+        changelogElem.style.color = colorsRGB[17];
+        changelogElem.style.backgroundColor =  colorComponent + ', 0.2)';
+        changelogElem.style.border = '1px solid ' + colorComponent + ', 0.4)';
+        updateTab.parentElement.insertBefore(changelogElem, updateTab);
 
         initPostImage();
         initGamemode();
