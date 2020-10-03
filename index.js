@@ -28,7 +28,10 @@
             </select>
         </div>
         <div style="display: inline !important;">
-            <div style="margin-bottom: 5px;"><label for="scsPallet">Color pallet:</label></div>
+            <div style="margin-bottom: 5px; display: flex; align-items: center;">
+                <label for="scsPalletChecked">Color pallet:</label>
+                <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
+            </div>
             <textarea id="scsPallet" class="form-control" maxlength="200" placeholder="Comma-separated RGB hex values (e.g. RRGGBB)..." style="width: 100%; margin: 0; max-height: 10em; min-height: 2.5em; resize: vertical;"></textarea>
         </div>
         <h5>Keybinds</h5>
@@ -196,7 +199,7 @@
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
     let pickingTool;
-    let pallet;
+    let pallet, palletChecked;
 
     if (document.readyState === 'complete') {
         init();
@@ -242,9 +245,19 @@
             palletInput.value = pallet;
         }
 
+        palletChecked = localStorage.getItem('scsPalletChecked');
+        let palletCheckedInput = document.getElementById('scsPalletChecked');
+        if (palletChecked) {
+            palletCheckedInput.checked = true;
+        }
+
         palletInput.onchange = function (event) {
             localStorage.setItem('scsPallet', event.target.value);
             pallet = event.target.value;
+        };
+        palletCheckedInput.onchange = function (event) {
+            localStorage.setItem('scsPalletChecked', event.target.checked);
+            palletChecked = event.target.checked;
         };
     }
 
@@ -621,7 +634,7 @@
                     canvas.style.opacity = 1;
                 }
 
-                if (pallet) {
+                if (pallet && palletChecked) {
                     if (typeof pallet === 'string') {
                         pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
                         localStorage.setItem('scsPallet', pallet);
