@@ -13,3 +13,4 @@ A collection of user scripts for skribbl.io
 - Gamemodes
   - Blind mode - Spice
 - Hatching brush tool - Spice
+- Player muter
