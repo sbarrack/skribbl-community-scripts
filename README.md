@@ -13,4 +13,6 @@ A collection of user scripts for skribbl.io
 - Gamemodes
   - Blind mode - Spice
 - Hatching brush tool - Spice
+- Color picking tool - Tobeh
+- Custom color pallets - Tobeh
 - Player muter
