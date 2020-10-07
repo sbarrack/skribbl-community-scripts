@@ -15,3 +15,4 @@ A collection of user scripts for skribbl.io
 - Hatching brush tool - Spice
 - Color picking tool - Tobeh
 - Custom color pallets - Tobeh
+- Player muter
