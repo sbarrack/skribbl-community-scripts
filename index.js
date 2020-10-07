@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.14
+// @version      0.15
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -14,6 +14,12 @@
 (function($) {
     'use strict';
 
+    const changelog = `
+        <h4>Skribbl Community Script</h4>
+        <b>Beta v0.15 - Pallet feature &amp; bug fixes</b>
+        <br>
+        Introducing color pallets. Paste a comma-seperated list of RGB hex colors into the text area underneath &rdquo;Color pallet:&ldquo; and check the adjacent box to turn on/off your new colors!
+    `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
         <div>
@@ -28,7 +34,10 @@
             </select>
         </div>
         <div style="display: inline !important;">
-            <div style="margin-bottom: 5px;"><label for="scsPallet">Color pallet:</label></div>
+            <div style="margin-bottom: 5px; display: flex; align-items: center;">
+                <label for="scsPalletChecked">Color pallet:</label>
+                <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
+            </div>
             <textarea id="scsPallet" class="form-control" maxlength="200" placeholder="Comma-separated RGB hex values (e.g. RRGGBB)..." style="width: 100%; margin: 0; max-height: 10em; min-height: 2.5em; resize: vertical;"></textarea>
         </div>
         <h5>Keybinds</h5>
@@ -187,8 +196,8 @@
 
     let lastColorIdx = 11;
 
-    let canvas;
-    let discordTag, artist, word;
+    let canvas, timer;
+    let discordTag, artist, word, currentWord, solutionText;
     let chatModKey, chatFocusKey;
     let currentGamemode;
     let sizeSelection, brushSizes;
@@ -196,7 +205,7 @@
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
     let pickingTool;
-    let pallet;
+    let pallet, palletCheckedInput;
 
     if (document.readyState === 'complete') {
         init();
@@ -206,6 +215,9 @@
 
     function init() {
         canvas = document.getElementById('canvasGame');
+        solutionText = document.querySelector('#overlay .text');
+        currentWord = document.getElementById('currentWord');
+        timer = document.getElementById('timer');
 
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
@@ -213,6 +225,16 @@
 
         let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+
+        let updateTab = document.getElementById('collapseUpdate');
+        let changelogElem = document.createElement('div');
+        changelogElem.innerHTML = changelog;
+        changelogElem.classList.add('updateInfo');
+        let colorComponent = colorsRGB[17].slice(0, colorsRGB[17].length - 1);
+        changelogElem.style.color = colorsRGB[17];
+        changelogElem.style.backgroundColor =  colorComponent + ', 0.2)';
+        changelogElem.style.border = '1px solid ' + colorComponent + ', 0.4)';
+        updateTab.parentElement.insertBefore(changelogElem, updateTab);
 
         initPostImage();
         initGamemode();
@@ -242,9 +264,15 @@
             palletInput.value = pallet;
         }
 
+        palletCheckedInput = document.getElementById('scsPalletChecked');
+        palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
+
         palletInput.onchange = function (event) {
             localStorage.setItem('scsPallet', event.target.value);
             pallet = event.target.value;
+        };
+        palletCheckedInput.onchange = function (event) {
+            localStorage.setItem('scsPalletChecked', event.target.checked);
         };
     }
 
@@ -267,6 +295,7 @@
                 }
                 hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
+                scsAnchor.style.display = 'none';
                 if (hatchInterval) {
                     clearInterval(hatchInterval);
                     hatchInterval = 0;
@@ -621,7 +650,7 @@
                     canvas.style.opacity = 1;
                 }
 
-                if (pallet) {
+                if (pallet && palletCheckedInput.checked) {
                     if (typeof pallet === 'string') {
                         pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
                         localStorage.setItem('scsPallet', pallet);
@@ -652,7 +681,9 @@
             let drawer = mutations[0].target;
 
             if (drawer.style.display !== 'none') {
-                artist = drawer.closest('.player').querySelector('.name').innerHTML;
+                setTimeout(() => {
+                    artist = drawer.closest('.player').querySelector('.name').innerHTML;
+                }, 3000);
             };
         });
 
@@ -677,43 +708,64 @@
         });
     }
 
+    let debouncePostTimeout;
+    function clearDebounce() {
+        clearTimeout(debouncePostTimeout);
+        debouncePostTimeout = 0;
+    }
     function postImage(channel) {
-        if (discordTag) {
-            word = document.getElementById('currentWord').innerText;
-            word = word.replaceAll('_', '\\*');
-            if (channel.name === channels.guess.name) {
-                word = word.replaceAll(/[a-z,A-Z]/g, '\\*') + ' ||' + word + '||';
-            }
-
-            let data = new FormData();
-            data.append('image', canvas.toDataURL().split(',')[1]);
-            data.append('name', Date.now() + '.png');
-            data.append('title', word + ' by ' + artist);
-            data.append('description', 'Posted by ' + discordTag);
-
-            fetch('https://api.imgur.com/3/image', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
-                body: data
-            }).then(res => {
-                res.json().then(res2 => {
-                    fetch(channel.url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            embeds: [{
-                                title: channel.name,
-                                description: word + ' by ' + artist + '\n' + res2.data.link,
-                                url: 'https://github.com/sbarrack/skribbl-community-scripts/',
-                                color: colors[Math.floor(Math.random() * colors.length)],
-                                timestamp: new Date(),
-                                footer: { text: discordTag },
-                                image: { url: res2.data.link }
-                            }]
-                        })
-                    }).then(res => console.debug(res)).catch(err => handleErr(err));
+        let canvasImage = canvas.toDataURL().split(',')[1];
+        let wordParsed = solutionText.innerText;
+        word = currentWord.innerText;
+        let timeLeft = timer.innerText;
+        if (debouncePostTimeout) {
+            clearTimeout(debouncePostTimeout);
+            debouncePostTimeout = setTimeout(clearDebounce, 3000);
+        } else {
+            if (discordTag) {
+                debouncePostTimeout = setTimeout(clearDebounce, 3000);
+                if (channel.name === channels.guess.name) {
+                    let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
+                    words.forEach((v, i, a) => { a[i] = v.length.toString(10); });
+                    words = words.join(' ');
+                    wordParsed = word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
+                } else {
+                    if (wordParsed.startsWith('The word was: ')) {
+                        word = wordParsed.slice(14);
+                    }
+                    wordParsed = word.replace(/_/g, '\\*');
+                }
+    
+                let data = new FormData();
+                data.append('image', canvasImage);
+                data.append('name', Date.now() + '.png');
+                data.append('title', word + ' by ' + artist);
+                data.append('description', 'Posted by ' + discordTag);
+    
+                fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
+                    body: data
+                }).then(res => {
+                    res.json().then(res2 => {
+                        fetch(channel.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                embeds: [{
+                                    title: channel.name,
+                                    description: wordParsed + ' by ' + artist + '\n' + res2.data.link + ' with ' + timeLeft + ' sec(s) remaining',
+                                    url: 'https://github.com/sbarrack/skribbl-community-scripts/',
+                                    color: colors[Math.floor(Math.random() * colors.length)],
+                                    timestamp: new Date(),
+                                    footer: { text: discordTag },
+                                    image: { url: res2.data.link }
+                                }]
+                            })
+                        }).then(res => console.debug(res)).catch(err => handleErr(err));
+                    }).catch(err => handleErr(err));
                 }).catch(err => handleErr(err));
-            }).catch(err => handleErr(err));
+            }
         }
     }
 
