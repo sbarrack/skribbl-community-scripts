@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.15
+// @version      0.16
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -16,9 +16,9 @@
 
     const changelog = `
         <h4>Skribbl Community Script</h4>
-        <b>Beta v0.15 - Pallet feature &amp; bug fixes</b>
+        <b>Beta v0.16 - Player muter</b>
         <br>
-        Introducing color pallets. Paste a comma-seperated list of RGB hex colors into the text area underneath &rdquo;Color pallet:&ldquo; and check the adjacent box to turn on/off your new colors!
+        Click a persons name in the player list to mute their chat messages in the chat window and in the speech bubbles.
     `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
@@ -162,6 +162,16 @@
             #randomIcon {
                 display: none;
             }
+            #containerPlayerlist .player .name:hover {
+                cursor: pointer;
+                text-decoration: underline;
+            }
+            .scsMute {
+                opacity: 0.5;
+            }
+            .scsMute .message {
+                display: none !important;
+            }
         </style>
     </div>`;
 
@@ -195,6 +205,7 @@
     const hatchetAnchor = { x: null, y: null };
 
     let lastColorIdx = 11;
+    let playerBlacklist = [];
 
     let canvas, timer;
     let discordTag, artist, word, currentWord, solutionText;
@@ -204,7 +215,7 @@
     let colorSelection, brushColors;
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
-    let pickingTool;
+    let pickingTool, scsAnchor;
     let pallet, palletCheckedInput;
 
     if (document.readyState === 'complete') {
@@ -244,6 +255,7 @@
         initRainbow();
         initHatching();
         initPallet();
+        initChatBlacklist();
         initGameObserver();
 
         document.body.onkeydown = (event) => {
@@ -256,6 +268,23 @@
             }
         };
     };
+
+    function initChatBlacklist() {
+        document.addEventListener('click', e => {
+            if (e.target.classList.contains('name') && e.target.parentElement.parentElement.classList.contains('player')) {
+                e.stopImmediatePropagation();
+                let name = e.target.innerText;
+                let nameIdx = playerBlacklist.indexOf(name);
+                if (nameIdx == -1) {
+                    playerBlacklist.push(name);
+                    e.target.parentElement.parentElement.classList.add('scsMute');
+                } else {
+                    playerBlacklist.splice(nameIdx, 1);
+                    e.target.parentElement.parentElement.classList.remove('scsMute');
+                }
+            }
+        });
+    }
 
     function initPallet() {
         pallet = localStorage.getItem('scsPallet');
@@ -284,6 +313,13 @@
         hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif');
         hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
         $(hatchingTool.firstChild).tooltip();
+        
+        scsAnchor = document.createElement('img');
+        scsAnchor.id = 'scsAnchor';
+        scsAnchor.style.display = 'none';
+        scsAnchor.style.position = 'absolute';
+        scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+        document.body.appendChild(scsAnchor);
 
         let hatchInterval = 0;
         hatchingTool.onclick = function(event) {
@@ -302,13 +338,6 @@
                 }
             }
         };
-
-        const scsAnchor = document.createElement('img');
-        scsAnchor.id = 'scsAnchor';
-        scsAnchor.style.display = 'none';
-        scsAnchor.style.position = 'absolute';
-        scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
-        document.body.appendChild(scsAnchor);
 
         document.addEventListener('mousedown', event => {
             if (hatchingTool.classList.contains('scsToolActive')) {
@@ -704,6 +733,20 @@
             }
         });
         playersObserver.observe(document.getElementById('containerGamePlayers'), {
+            childList: true
+        });
+
+        let chatObserver = new MutationObserver(mutations => {
+            mutations.forEach(change => {
+                change.addedNodes.forEach(msg => {
+                    let sender = msg.firstChild.innerText;
+                    if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
+                        msg.remove();
+                    }
+                });
+            });
+        });
+        chatObserver.observe(document.getElementById('boxMessages'), {
             childList: true
         });
     }
