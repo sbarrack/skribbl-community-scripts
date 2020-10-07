@@ -196,8 +196,8 @@
 
     let lastColorIdx = 11;
 
-    let canvas;
-    let discordTag, artist, word;
+    let canvas, timer;
+    let discordTag, artist, word, currentWord, solutionText;
     let chatModKey, chatFocusKey;
     let currentGamemode;
     let sizeSelection, brushSizes;
@@ -215,6 +215,9 @@
 
     function init() {
         canvas = document.getElementById('canvasGame');
+        solutionText = document.querySelector('#overlay .text');
+        currentWord = document.getElementById('currentWord');
+        timer = document.getElementById('timer');
 
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
@@ -292,6 +295,7 @@
                 }
                 hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
             } else {
+                scsAnchor.style.display = 'none';
                 if (hatchInterval) {
                     clearInterval(hatchInterval);
                     hatchInterval = 0;
@@ -677,7 +681,9 @@
             let drawer = mutations[0].target;
 
             if (drawer.style.display !== 'none') {
-                artist = drawer.closest('.player').querySelector('.name').innerHTML;
+                setTimeout(() => {
+                    artist = drawer.closest('.player').querySelector('.name').innerHTML;
+                }, 3000);
             };
         });
 
@@ -702,43 +708,64 @@
         });
     }
 
+    let debouncePostTimeout;
+    function clearDebounce() {
+        clearTimeout(debouncePostTimeout);
+        debouncePostTimeout = 0;
+    }
     function postImage(channel) {
-        if (discordTag) {
-            word = document.getElementById('currentWord').innerText;
-            word = word.replaceAll('_', '\\*');
-            if (channel.name === channels.guess.name) {
-                word = word.replaceAll(/[a-z,A-Z]/g, '\\*') + ' ||' + word + '||';
-            }
-
-            let data = new FormData();
-            data.append('image', canvas.toDataURL().split(',')[1]);
-            data.append('name', Date.now() + '.png');
-            data.append('title', word + ' by ' + artist);
-            data.append('description', 'Posted by ' + discordTag);
-
-            fetch('https://api.imgur.com/3/image', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
-                body: data
-            }).then(res => {
-                res.json().then(res2 => {
-                    fetch(channel.url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            embeds: [{
-                                title: channel.name,
-                                description: word + ' by ' + artist + '\n' + res2.data.link,
-                                url: 'https://github.com/sbarrack/skribbl-community-scripts/',
-                                color: colors[Math.floor(Math.random() * colors.length)],
-                                timestamp: new Date(),
-                                footer: { text: discordTag },
-                                image: { url: res2.data.link }
-                            }]
-                        })
-                    }).then(res => console.debug(res)).catch(err => handleErr(err));
+        let canvasImage = canvas.toDataURL().split(',')[1];
+        let wordParsed = solutionText.innerText;
+        word = currentWord.innerText;
+        let timeLeft = timer.innerText;
+        if (debouncePostTimeout) {
+            clearTimeout(debouncePostTimeout);
+            debouncePostTimeout = setTimeout(clearDebounce, 3000);
+        } else {
+            if (discordTag) {
+                debouncePostTimeout = setTimeout(clearDebounce, 3000);
+                if (channel.name === channels.guess.name) {
+                    let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
+                    words.forEach((v, i, a) => { a[i] = v.length.toString(10); });
+                    words = words.join(' ');
+                    wordParsed = word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
+                } else {
+                    if (wordParsed.startsWith('The word was: ')) {
+                        word = wordParsed.slice(14);
+                    }
+                    wordParsed = word.replace(/_/g, '\\*');
+                }
+    
+                let data = new FormData();
+                data.append('image', canvasImage);
+                data.append('name', Date.now() + '.png');
+                data.append('title', word + ' by ' + artist);
+                data.append('description', 'Posted by ' + discordTag);
+    
+                fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
+                    body: data
+                }).then(res => {
+                    res.json().then(res2 => {
+                        fetch(channel.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                embeds: [{
+                                    title: channel.name,
+                                    description: wordParsed + ' by ' + artist + '\n' + res2.data.link + ' with ' + timeLeft + ' sec(s) remaining',
+                                    url: 'https://github.com/sbarrack/skribbl-community-scripts/',
+                                    color: colors[Math.floor(Math.random() * colors.length)],
+                                    timestamp: new Date(),
+                                    footer: { text: discordTag },
+                                    image: { url: res2.data.link }
+                                }]
+                            })
+                        }).then(res => console.debug(res)).catch(err => handleErr(err));
+                    }).catch(err => handleErr(err));
                 }).catch(err => handleErr(err));
-            }).catch(err => handleErr(err));
+            }
         }
     }
 
