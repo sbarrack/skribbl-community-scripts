@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.14
+// @version      0.15
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -16,7 +16,7 @@
 
     const changelog = `
         <h4>Skribbl Community Script</h4>
-        <b>Beta v0.15</b>
+        <b>Beta v0.15 - Pallet feature &amp; bug fixes</b>
         <br>
         Introducing color pallets. Paste a comma-seperated list of RGB hex colors into the text area underneath &rdquo;Color pallet:&ldquo; and check the adjacent box to turn on/off your new colors!
     `;
