@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.16
+// @version      0.17
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -15,10 +15,10 @@
     'use strict';
 
     const changelog = `
-        <h4>Skribbl Community Script</h4>
-        <b>Beta v0.16 - Player muter</b>
+        <h4><a ref="nofollow noreferrer external" target="_blank" href="https://github.com/sbarrack/skribbl-community-scripts/">Skribbl Community Script</a></h4>
+        <b>Beta v0.17 - Deaf mode & spam prevention</b>
         <br>
-        Click a persons name in the player list to mute their chat messages in the chat window and in the speech bubbles.
+        New gamemode where you are not able to see anyone's messages. Also duplicate messages will not show if they are immediately visible in the chat pane.
     `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
@@ -31,6 +31,7 @@
             <select class="form-control" id="scsGamemode">
                 <option>None</option>
                 <option>Blind</option>
+                <option>Deaf</option>
             </select>
         </div>
         <div style="display: inline !important;">
@@ -169,8 +170,12 @@
             .scsMute {
                 opacity: 0.5;
             }
-            .scsMute .message {
+            .scsMute .message,
+            .scsDeaf .message {
                 display: none !important;
+            }
+            .scsDeaf #boxMessages {
+                opacity: 0;
             }
         </style>
     </div>`;
@@ -678,6 +683,11 @@
                 } else {
                     canvas.style.opacity = 1;
                 }
+                if (currentGamemode === 'Deaf') {
+                    document.getElementsByClassName('containerGame')[0].classList.add('scsDeaf');
+                } else {
+                    document.getElementsByClassName('containerGame')[0].classList.remove('scsDeaf');
+                }
 
                 if (pallet && palletCheckedInput.checked) {
                     if (typeof pallet === 'string') {
@@ -736,12 +746,21 @@
             childList: true
         });
 
+        let msgBuffer = [];
         let chatObserver = new MutationObserver(mutations => {
             mutations.forEach(change => {
                 change.addedNodes.forEach(msg => {
                     let sender = msg.firstChild.innerText;
                     if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
                         msg.remove();
+                    }
+                    if (msgBuffer.indexOf(msg.lastChild.innerText) == -1) {
+                        msgBuffer.push(msg.lastChild.innerText);
+                    } else {
+                        msg.remove();
+                    }
+                    if (msgBuffer.length > 20) {
+                        msgBuffer.shift();
                     }
                 });
             });
