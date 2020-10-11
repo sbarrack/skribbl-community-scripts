@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.17
+// @version      0.18
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -16,9 +16,9 @@
 
     const changelog = `
         <h4><a ref="nofollow noreferrer external" target="_blank" href="https://github.com/sbarrack/skribbl-community-scripts/">Skribbl Community Script</a></h4>
-        <b>Beta v0.17 - Deaf mode & spam prevention</b>
+        <b>Beta v0.18 - Color Pallet update</b>
         <br>
-        New gamemode where you are not able to see anyone's messages. Also duplicate messages will not show if they are immediately visible in the chat pane.
+        Color pallets are now formatted to be compatible with the Skribbl Typo Chrome extension.
     `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
@@ -39,7 +39,7 @@
                 <label for="scsPalletChecked">Color pallet:</label>
                 <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
             </div>
-            <textarea id="scsPallet" class="form-control" maxlength="200" placeholder="Comma-separated RGB hex values (e.g. RRGGBB)..." style="width: 100%; margin: 0; max-height: 10em; min-height: 2.5em; resize: vertical;"></textarea>
+            <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #xxxxxx, #xxx, or rgb())..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
         </div>
         <h5>Keybinds</h5>
         <p><i>Esc</i> unbinds a key binding.</p>
@@ -166,6 +166,9 @@
             #containerPlayerlist .player .name:hover {
                 cursor: pointer;
                 text-decoration: underline;
+            }
+            #containerPlayerlist .player {
+                max-height: 48px;
             }
             .scsMute {
                 opacity: 0.5;
@@ -302,8 +305,9 @@
         palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
 
         palletInput.onchange = function (event) {
-            localStorage.setItem('scsPallet', event.target.value);
-            pallet = event.target.value;
+            let parsedPallet = JSON.stringify(JSON.parse(event.target.value));
+            localStorage.setItem('scsPallet', parsedPallet);
+            pallet = parsedPallet;
         };
         palletCheckedInput.onchange = function (event) {
             localStorage.setItem('scsPalletChecked', event.target.checked);
@@ -690,23 +694,37 @@
                 }
 
                 if (pallet && palletCheckedInput.checked) {
-                    if (typeof pallet === 'string') {
-                        pallet = pallet.replace(/0x/g, '').replace(/[^a-f\d,]/gi, '').toLowerCase().replace(/,,/g, ',').replace(/(^,)|(,$)/g, '');
-                        localStorage.setItem('scsPallet', pallet);
-                        pallet = pallet.split(',', 20);
-                        let i = 21;
-                        pallet.forEach((v, k, a) => {
-                            i -= i == 11 || i == 0 ? 1 : 0;
-                            if (i >= 0 && v.length == 6) {
-                                brushColors[i].style.backgroundColor = '#' + v;
-                                colors[i] = parseInt(v, 16);
-                                colorsRGB[i--] = 'rgb(' + [ 
-                                    parseInt(v.substr(0, 2), 16).toString(10),
-                                    parseInt(v.substr(2, 2), 16).toString(10),
-                                    parseInt(v.substr(4, 2), 16).toString(10)
-                                ].join(', ') + ')';
-                            }
-                        });
+                    pallet = JSON.parse(pallet);
+                    if (pallet) {
+                        if (pallet.colors) {
+                            pallet.colors.forEach((v, i, a) => {
+                                if (Number.isSafeInteger(v.index)) {
+                                    if ((v.index > 0 && v.index < 11) || (v.index > 11 && v.index < 22)) {
+                                        if (/^#([0-9a-f]{3}){1,2}$/i.test(v.color)) {
+                                            let t = v.color.length == 7;
+                                            brushColors[v.index].style.backgroundColor = v.color;
+                                            colors[v.index] = parseInt(v.color.slice(1), 16);
+                                            colorsRGB[v.index] = 'rgb(' + 
+                                            parseInt(v.color.slice(1, t ? 3 : 2), 16).toString(10) +
+                                            parseInt(v.color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10) +
+                                            parseInt(v.color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10) +
+                                            ')';
+                                        } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(v.color)) {
+                                            colorsRGB[v.index] = v.color;
+                                            let components = v.color.slice(4, v.color.length - 1).split(', ');
+                                            components.forEach((w, j, b) => {
+                                                b[j] = parseInt(w, 10).toString(16);
+                                            });
+                                            components = components.join('');
+                                            brushColors[v.index].style.backgroundColor = '#' + components;
+                                            colors[v.index] = parseInt(components, 16);
+                                        } else {
+                                            console.error(`Invalid color ${v.color} at index ${v.index}!`);
+                                        }
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             };
