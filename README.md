@@ -1,6 +1,13 @@
 # skribbl-community-scripts
 A collection of user scripts for skribbl.io
 
+## Installation
+1. Install Tampermonkey browser extension
+2. Paste "index.js" into a new script
+3. Turn on automatic updates
+
+## Usage
+
 ## Features
 - Settings and keybind menu
 - Color toggle tool
