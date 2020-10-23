@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      0.18
+// @version      1.0
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -13,13 +13,8 @@
 
 (function($) {
     'use strict';
+    // TODO One shot gamemode. use drawing observer to reset input to enabled. after message in chat says you guess correct (via chat observer), disable the chat input
 
-    const changelog = `
-        <h4><a ref="nofollow noreferrer external" target="_blank" href="https://github.com/sbarrack/skribbl-community-scripts/">Skribbl Community Script</a></h4>
-        <b>Beta v0.18 - Color Pallet update</b>
-        <br>
-        Color pallets are now formatted to be compatible with the Skribbl Typo Chrome extension.
-    `;
     const keybindPanel = `
         <h4>Don't Spell</h4>
         <div>
@@ -32,6 +27,7 @@
                 <option>None</option>
                 <option>Blind</option>
                 <option>Deaf</option>
+                <option>One shot</option>
             </select>
         </div>
         <div style="display: inline !important;">
@@ -39,7 +35,7 @@
                 <label for="scsPalletChecked">Color pallet:</label>
                 <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
             </div>
-            <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #xxxxxx, #xxx, or rgb())..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
+            <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #rrggbb, #rgb, or rgb(rrr, ggg, bbb))..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
         </div>
         <h5>Keybinds</h5>
         <p><i>Esc</i> unbinds a key binding.</p>
@@ -215,9 +211,8 @@
     let lastColorIdx = 11;
     let playerBlacklist = [];
 
-    let canvas, timer;
-    let discordTag, artist, word, currentWord, solutionText;
-    let chatModKey, chatFocusKey;
+    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey;
+    let discordTag, artist, word;
     let currentGamemode;
     let sizeSelection, brushSizes;
     let colorSelection, brushColors;
@@ -241,23 +236,12 @@
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
-
         let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
 
-        let updateTab = document.getElementById('collapseUpdate');
-        let changelogElem = document.createElement('div');
-        changelogElem.innerHTML = changelog;
-        changelogElem.classList.add('updateInfo');
-        let colorComponent = colorsRGB[17].slice(0, colorsRGB[17].length - 1);
-        changelogElem.style.color = colorsRGB[17];
-        changelogElem.style.backgroundColor =  colorComponent + ', 0.2)';
-        changelogElem.style.border = '1px solid ' + colorComponent + ', 0.4)';
-        updateTab.parentElement.insertBefore(changelogElem, updateTab);
-
-        initPostImage();
-        initGamemode();
         initChatFocus();
+        initPostImage(); // TODO clean up starting here
+        initGamemode();
         initBrushSelect();
         initBrushColor();
         initRainbow();
@@ -269,13 +253,115 @@
         document.body.onkeydown = (event) => {
             if (document.activeElement.id !== 'inputChat') {
                 focusChat(event);
+                toggleHotkeys(event);
                 selectBrushSize(event);
                 selectBrushColor(event);
-                toggleRainbow(event);
-                toggleHatch(event);
             }
         };
     };
+
+    function initChatFocus() {
+        let focusKeybind = document.getElementById('scsChatFocus');
+        let focusKeybind2 = document.getElementById('scsChatFocus2');
+
+        chatModKey = localStorage.getItem('scsChatFocus');
+        focusKeybind.value = chatModKey ? chatModKey : 'None';
+        chatFocusKey = focusKeybind2.value = localStorage.getItem('scsChatFocus2');
+
+        focusKeybind.addEventListener('change', function (event) {
+            localStorage.setItem('scsChatFocus', event.target.value);
+            chatModKey = event.target.value;
+        });
+        focusKeybind2.addEventListener('click', function (event) {
+            document.addEventListener('keydown', bindKey);
+            setTimeout(function () {
+                document.removeEventListener('keydown', bindKey);
+            }, 10000);
+            
+            function bindKey(e) {
+                if (e.key !== 'Escape') {
+                    localStorage.setItem('scsChatFocus2', e.key);
+                    event.target.value = e.key;
+                    chatFocusKey = e.key;
+                } else {
+                    localStorage.setItem('scsChatFocus2', '');
+                    event.target.value = '';
+                    chatFocusKey = '';
+                }
+                document.removeEventListener('keydown', bindKey);
+            }
+        });
+    }
+
+    function focusChat(event) {
+        let modKey = true;
+        if (chatModKey === 'Shift') {
+            modKey = event.shiftKey;
+        } else if (chatModKey === 'Alt') {
+            modKey = event.altKey;
+        } else if (chatModKey === 'Ctrl') {
+            modKey = event.ctrlKey;
+        }
+        if ((event.key === chatFocusKey && modKey) || (!chatFocusKey && event.key === chatModKey)) {
+            event.preventDefault();
+            document.getElementById('inputChat').focus();
+        }
+    }
+
+    function toggleHotkeys(event) {
+        if (event.key === 'r') {
+            rainbowTool.click();
+        } else if (event.key === 't') {
+            switchColors();
+        } else if (event.key === 'c') {
+            event.preventDefault();
+            event.stopPropagation();
+            pickingTool.click();
+        } else if (event.key === 'h') {
+            hatchingTool.click();
+        } else if (event.key === 'Escape' && hatchingTool.classList.contains('scsToolActive')) {
+            event.preventDefault();
+            event.stopPropagation();
+            Object.assign(hatchetAnchor, { x: null, y: null });
+            scsAnchor.style.display = 'none';
+        }
+    }
+
+    function selectBrushSize(event) {
+        if (!['1', '2', '3', '4'].includes(event.key)) {
+            return;
+        }
+        if ((sizeSelection === '1-4' && event.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && event.code.match(/Numpad[0-9]/))) {
+            brushSizes[+event.key - 1].click();
+        }
+    }
+
+    function selectBrushColor(event) {
+        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
+            return;
+        }
+        if ((colorSelection === '0-9' && event.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && event.code.match(/Numpad[0-9]/))) {
+            let targetColor = 11;
+            if (event.key === '0') {
+                switch (lastColorIdx) {
+                    case 11:
+                        targetColor = 0;
+                        break;
+                    case 0:
+                        targetColor = 1;
+                        break;
+                    case 1:
+                        targetColor = 12;
+                }
+            } else if (lastColorIdx == +event.key + 1) {
+                targetColor = +event.key + 12;
+            } else {
+                targetColor = +event.key + 1;
+            }
+            brushColors[targetColor].click();
+            lastColorIdx = targetColor;
+        }
+    }
 
     function initChatBlacklist() {
         document.addEventListener('click', e => {
@@ -380,17 +466,6 @@
         }
     }
 
-    function toggleHatch(event) {
-        if (event.key === 'h') {
-            hatchingTool.click();
-        } else if (event.key === 'Escape' && hatchingTool.classList.contains('scsToolActive')) {
-            event.preventDefault();
-            event.stopPropagation();
-            Object.assign(hatchetAnchor, { x: null, y: null });
-            scsAnchor.style.display = 'none';
-        }
-    }
-
     function initRainbow() {
         primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
         secondaryActiveColor = primaryActiveColor.cloneNode();
@@ -492,18 +567,6 @@
         rainbowIdx += 1;
     }
 
-    function toggleRainbow(event) {
-        if (event.key === 'r') {
-            rainbowTool.click();
-        } else if (event.key === 't') {
-            switchColors();
-        } else if (event.key === 'c') {
-            event.preventDefault();
-            event.stopPropagation();
-            pickingTool.click();
-        }
-    }
-
     function switchColors() {
         let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
         secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
@@ -523,34 +586,6 @@
         brushColors = document.querySelectorAll('[data-color]');
     }
 
-    function selectBrushColor(event) {
-        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
-            return;
-        }
-        if ((colorSelection === '0-9' && event.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && event.code.match(/Numpad[0-9]/))) {
-            let targetColor = 11;
-            if (event.key === '0') { // monochrome
-                switch (lastColorIdx) {
-                    case 11:
-                        targetColor = 0;
-                        break;
-                    case 0:
-                        targetColor = 1;
-                        break;
-                    case 1:
-                        targetColor = 12;
-                        break;
-                }
-            } else if (lastColorIdx == +event.key + 1) {
-                targetColor = +event.key + 12;
-            } else {
-                targetColor = +event.key + 1;
-            }
-            brushColors[targetColor].click();
-            lastColorIdx = targetColor;
-        }
-    }
-
     function initBrushSelect() {
         sizeSelection = localStorage.getItem('scsBrushSize');
         let sizeInput = document.getElementById('scsBrushSize');
@@ -564,15 +599,6 @@
         brushSizes = document.querySelectorAll('[data-size]');
     }
 
-    function selectBrushSize(event) {
-        if (!['1', '2', '3', '4'].includes(event.key)) {
-            return;
-        }
-        if ((sizeSelection === '1-4' && event.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && event.code.match(/Numpad[0-9]/))) {
-            brushSizes[+event.key - 1].click();
-        }
-    }
-
     function initGamemode() {
         currentGamemode = sessionStorage.getItem('scsGamemode');
         let gamemodeInput = document.getElementById('scsGamemode');
@@ -582,52 +608,6 @@
             sessionStorage.setItem('scsGamemode', event.target.value);
             currentGamemode = event.target.value;
         };
-    }
-
-    function initChatFocus() {
-        chatModKey = localStorage.getItem('scsChatFocus');
-        document.getElementById('scsChatFocus').value = chatModKey ? chatModKey : 'None';
-        chatFocusKey = document.getElementById('scsChatFocus2').value = localStorage.getItem('scsChatFocus2');
-
-        document.getElementById('scsChatFocus2').onclick = function (event) {
-            document.addEventListener('keydown', bindKey);
-            setTimeout(function () {
-                document.removeEventListener('keydown', bindKey);
-            }, 10000);
-
-            function bindKey(e) {
-                if (e.key !== 'Escape') {
-                    localStorage.setItem('scsChatFocus2', e.key);
-                    event.target.value = e.key;
-                    chatFocusKey = e.key;
-                } else {
-                    localStorage.setItem('scsChatFocus2', '');
-                    event.target.value = '';
-                    chatFocusKey = '';
-                }
-
-                document.removeEventListener('keydown', bindKey);
-            }
-        };
-        document.getElementById('scsChatFocus').onchange = function (event) {
-            localStorage.setItem('scsChatFocus', event.target.value);
-            chatModKey = event.target.value;
-        };
-    }
-
-    function focusChat(event) {
-        let modKeyIsGood = true;
-        if (chatModKey === 'Shift') {
-            modKeyIsGood = event.shiftKey;
-        } else if (chatModKey === 'Alt') {
-            modKeyIsGood = event.altKey;
-        } else if (chatModKey === 'Ctrl') {
-            modKeyIsGood = event.ctrlKey;
-        }
-        if ((event.key === chatFocusKey && modKeyIsGood) || (!chatFocusKey && event.key === chatModKey)) {
-            event.preventDefault();
-            document.getElementById('inputChat').focus();
-        }
     }
 
     function initPostImage() {
@@ -689,8 +669,10 @@
                 }
                 if (currentGamemode === 'Deaf') {
                     document.getElementsByClassName('containerGame')[0].classList.add('scsDeaf');
+                    currentWord.style.opacity = 0;
                 } else {
                     document.getElementsByClassName('containerGame')[0].classList.remove('scsDeaf');
+                    currentWord.style.opacity = 1;
                 }
 
                 if (pallet && palletCheckedInput.checked) {
