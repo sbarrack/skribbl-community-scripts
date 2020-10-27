@@ -13,7 +13,6 @@
 
 (function($) {
     'use strict';
-    // TODO One shot gamemode. use drawing observer to reset input to enabled. after message in chat says you guess correct (via chat observer), disable the chat input
 
     const keybindPanel = `
         <h4>Don't Spell</h4>
@@ -211,14 +210,14 @@
     let lastColorIdx = 11;
     let playerBlacklist = [];
 
-    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey;
+    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey, chatInput;
     let discordTag, artist, word;
     let currentGamemode;
     let sizeSelection, brushSizes;
     let colorSelection, brushColors;
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
-    let pickingTool, scsAnchor;
+    let scsAnchor;
     let pallet, palletCheckedInput;
 
     if (document.readyState === 'complete') {
@@ -232,12 +231,14 @@
         solutionText = document.querySelector('#overlay .text');
         currentWord = document.getElementById('currentWord');
         timer = document.getElementById('timer');
+        chatInput = document.getElementById('inputChat');
 
         let panelElem = document.createElement('div');
         panelElem.classList.add('scsTitleMenu');
         panelElem.innerHTML = keybindPanel;
         let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+        $('[data-tool="pen"] > .toolIcon').attr('title', '(B)rush (middle click to pick colors)').tooltip('fixTitle');
 
         initChatFocus();
         initPostImage(); // TODO clean up starting here
@@ -250,14 +251,27 @@
         initChatBlacklist();
         initGameObserver();
 
-        document.body.onkeydown = (event) => {
+        document.addEventListener('keydown', (e) => {
             if (document.activeElement.id !== 'inputChat') {
-                focusChat(event);
-                toggleHotkeys(event);
-                selectBrushSize(event);
-                selectBrushColor(event);
+                focusChat(e);
+                toggleHotkeys(e);
+                selectBrushSize(e);
+                selectBrushColor(e);
             }
-        };
+        });
+        canvas.addEventListener('mousedown', e => {
+            if (e.button == 1 && !hatchingTool.classList.contains('scsToolActive')) {
+                let rect = canvas.getBoundingClientRect();
+                let color = Uint32Array.from(canvas.getContext('2d').getImageData(
+                    Math.floor((e.clientX - rect.x) / rect.width * canvas.width),
+                    Math.floor((e.clientY - rect.y) / rect.height * canvas.height),
+                    1, 1).data);
+                let pickIdx = colors.indexOf(color[0] << 16 | color[1] << 8 | color[2]);
+                if (pickIdx != -1) {
+                    brushColors[pickIdx].click();
+                }
+            }
+        });
     };
 
     function initChatFocus() {
@@ -304,24 +318,20 @@
         }
         if ((event.key === chatFocusKey && modKey) || (!chatFocusKey && event.key === chatModKey)) {
             event.preventDefault();
-            document.getElementById('inputChat').focus();
+            chatInput.focus();
         }
     }
 
-    function toggleHotkeys(event) {
-        if (event.key === 'r') {
+    function toggleHotkeys(e) {
+        if (e.key === 'r') {
             rainbowTool.click();
-        } else if (event.key === 't') {
+        } else if (e.key === 't') {
             switchColors();
-        } else if (event.key === 'c') {
-            event.preventDefault();
-            event.stopPropagation();
-            pickingTool.click();
-        } else if (event.key === 'h') {
+        } else if (e.key === 'h') {
             hatchingTool.click();
-        } else if (event.key === 'Escape' && hatchingTool.classList.contains('scsToolActive')) {
-            event.preventDefault();
-            event.stopPropagation();
+        } else if (e.key === ' ' && hatchingTool.classList.contains('scsToolActive')) {
+            e.preventDefault();
+            e.stopPropagation();
             Object.assign(hatchetAnchor, { x: null, y: null });
             scsAnchor.style.display = 'none';
         }
@@ -404,7 +414,7 @@
         let eraserTool = document.querySelector('[data-tool="erase"]');
         hatchingTool = eraserTool.cloneNode(true);
         hatchingTool.setAttribute('data-tool', 'scsHatching');
-        hatchingTool.firstChild.setAttribute('title', '(H)atching (middle click to anchor, ESC to unanchor)');
+        hatchingTool.firstChild.setAttribute('title', '(H)atching (middle click to anchor, space to unanchor)');
         hatchingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif');
         hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
         $(hatchingTool.firstChild).tooltip();
@@ -413,12 +423,12 @@
         scsAnchor.id = 'scsAnchor';
         scsAnchor.style.display = 'none';
         scsAnchor.style.position = 'absolute';
+        scsAnchor.style.pointerEvents = 'none';
         scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
         document.body.appendChild(scsAnchor);
 
         let hatchInterval = 0;
         hatchingTool.onclick = function(event) {
-            pickingTool.classList.remove('scsToolActive');
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
                 if (hatchetAnchor.x && hatchetAnchor.y) {
@@ -516,35 +526,6 @@
                 rainbowInterval = setInterval(rainbowCycle, event.target.value);
             }
         };
-
-        pickingTool = eraserTool.cloneNode(true);
-        pickingTool.setAttribute('data-tool', 'scsPicker');
-        pickingTool.firstChild.setAttribute('title', '(C)olor picker (middle click to pick)');
-        pickingTool.firstChild.setAttribute('src', 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/picker.gif');
-        pickingTool = eraserTool.parentNode.insertBefore(pickingTool, eraserTool);
-        $(pickingTool.firstChild).tooltip();
-
-        pickingTool.onclick = function(event) {
-            hatchingTool.classList.remove('scsToolActive');
-            scsAnchor.style.display = 'none';
-            pickingTool.classList.toggle('scsToolActive');
-        };
-
-        canvas.addEventListener('mousedown', event => {
-            if (pickingTool.classList.contains('scsToolActive')) {
-                if (event.button == 1) {
-                    let rect = canvas.getBoundingClientRect();
-                    let color = Uint32Array.from(canvas.getContext('2d').getImageData(
-                        Math.floor((event.clientX - rect.x) / rect.width * canvas.width),
-                        Math.floor((event.clientY - rect.y) / rect.height * canvas.height),
-                        1, 1).data);
-                    let pickIdx = colors.indexOf(color[0] << 16 | color[1] << 8 | color[2]);
-                    if (pickIdx != -1) {
-                        brushColors[pickIdx].click();
-                    }
-                }
-            }
-        });
     }
 
     let rainbowIdx = 0;
@@ -674,6 +655,28 @@
                     document.getElementsByClassName('containerGame')[0].classList.remove('scsDeaf');
                     currentWord.style.opacity = 1;
                 }
+                if (currentGamemode === 'One shot') {
+                    chatInput.addEventListener('keydown', oneshot);
+
+                    let drawingObserver = new MutationObserver(mutations => {
+                        let overlay = mutations[0].target;
+                        if (overlay.style.display !== 'none') {
+                            chatInput.disabled = false;
+                            chatInput.removeEventListener('keydown', oneshot);
+                        } else {
+                            chatInput.addEventListener('keydown', oneshot);
+                        }
+                    });
+                    drawingObserver.observe(document.getElementById('overlay'), {
+                        attributes: true,
+                        attributeFilter: ['style']
+                    });
+
+                    function oneshot(e) {
+                        chatInput.disabled = true;
+                        chatInput.removeEventListener('keydown', oneshot);
+                    }
+                }
 
                 if (pallet && palletCheckedInput.checked) {
                     pallet = JSON.parse(pallet);
@@ -725,7 +728,6 @@
                 }, 3000);
             };
         });
-
         let playersObserver = new MutationObserver(mutations => {
             if (mutations.length > 1) {
                 document.querySelectorAll('.drawing').forEach(div => {
@@ -746,21 +748,12 @@
             childList: true
         });
 
-        let msgBuffer = [];
         let chatObserver = new MutationObserver(mutations => {
             mutations.forEach(change => {
                 change.addedNodes.forEach(msg => {
                     let sender = msg.firstChild.innerText;
                     if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
                         msg.remove();
-                    }
-                    if (msgBuffer.indexOf(msg.lastChild.innerText) == -1) {
-                        msgBuffer.push(msg.lastChild.innerText);
-                    } else {
-                        msg.remove();
-                    }
-                    if (msgBuffer.length > 20) {
-                        msgBuffer.shift();
                     }
                 });
             });

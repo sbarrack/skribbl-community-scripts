@@ -18,7 +18,9 @@ A collection of user scripts for skribbl.io
 - Image poster - Jess, Ente
 - Focus chat shortcut - Photon
 - Gamemodes
-  - Blind mode - Spice
+  - Blind - Spice
+  - Deaf
+  - One shot
 - Hatching brush tool - Spice
 - Color picking tool - Tobeh
 - Custom color pallets - Tobeh
