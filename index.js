@@ -656,15 +656,15 @@
                     currentWord.style.opacity = 1;
                 }
                 if (currentGamemode === 'One shot') {
-                    chatInput.addEventListener('keydown', oneshot);
+                    chatInput.addEventListener('keyup', oneshot);
 
                     let drawingObserver = new MutationObserver(mutations => {
                         let overlay = mutations[0].target;
                         if (overlay.style.display !== 'none') {
                             chatInput.disabled = false;
-                            chatInput.removeEventListener('keydown', oneshot);
+                            chatInput.removeEventListener('keyup', oneshot);
                         } else {
-                            chatInput.addEventListener('keydown', oneshot);
+                            chatInput.addEventListener('keyup', oneshot);
                         }
                     });
                     drawingObserver.observe(document.getElementById('overlay'), {
@@ -673,8 +673,10 @@
                     });
 
                     function oneshot(e) {
-                        chatInput.disabled = true;
-                        chatInput.removeEventListener('keydown', oneshot);
+                        if (e.key === 'Enter') {
+                            chatInput.disabled = true;
+                            chatInput.removeEventListener('keyup', oneshot);
+                        }
                     }
                 }
 
