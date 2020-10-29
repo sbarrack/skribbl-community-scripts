@@ -210,7 +210,7 @@
     let lastColorIdx = 11;
     let playerBlacklist = [];
 
-    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey, chatInput;
+    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey, chatInput, containerFreespace;
     let discordTag, artist, word;
     let currentGamemode;
     let sizeSelection, brushSizes;
@@ -240,9 +240,14 @@
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
         $('[data-tool="pen"] > .toolIcon').attr('title', '(B)rush (middle click to pick colors)').tooltip('fixTitle');
 
+        containerFreespace = document.getElementById('containerFreespace');
+        containerFreespace.innerHTML = customUI;
+        containerFreespace.style.background = 'none';
+
         initChatFocus();
-        initPostImage(); // TODO clean up starting here
+        initPostImage();
         initGamemode();
+        
         initBrushSelect();
         initBrushColor();
         initRainbow();
@@ -277,49 +282,150 @@
     function initChatFocus() {
         let focusKeybind = document.getElementById('scsChatFocus');
         let focusKeybind2 = document.getElementById('scsChatFocus2');
-
         chatModKey = localStorage.getItem('scsChatFocus');
         focusKeybind.value = chatModKey ? chatModKey : 'None';
         chatFocusKey = focusKeybind2.value = localStorage.getItem('scsChatFocus2');
-
-        focusKeybind.addEventListener('change', function (event) {
-            localStorage.setItem('scsChatFocus', event.target.value);
-            chatModKey = event.target.value;
+        focusKeybind.addEventListener('change', e => {
+            localStorage.setItem('scsChatFocus', e.target.value);
+            chatModKey = e.target.value;
         });
-        focusKeybind2.addEventListener('click', function (event) {
+        focusKeybind2.addEventListener('click', e => {
             document.addEventListener('keydown', bindKey);
-            setTimeout(function () {
+            setTimeout(() => {
                 document.removeEventListener('keydown', bindKey);
             }, 10000);
-            
             function bindKey(e) {
                 if (e.key !== 'Escape') {
                     localStorage.setItem('scsChatFocus2', e.key);
-                    event.target.value = e.key;
+                    e.target.value = e.key;
                     chatFocusKey = e.key;
                 } else {
                     localStorage.setItem('scsChatFocus2', '');
-                    event.target.value = '';
+                    e.target.value = '';
                     chatFocusKey = '';
                 }
                 document.removeEventListener('keydown', bindKey);
             }
         });
     }
-
-    function focusChat(event) {
+    function focusChat(e) {
         let modKey = true;
         if (chatModKey === 'Shift') {
-            modKey = event.shiftKey;
+            modKey = e.shiftKey;
         } else if (chatModKey === 'Alt') {
-            modKey = event.altKey;
+            modKey = e.altKey;
         } else if (chatModKey === 'Ctrl') {
-            modKey = event.ctrlKey;
+            modKey = e.ctrlKey;
         }
-        if ((event.key === chatFocusKey && modKey) || (!chatFocusKey && event.key === chatModKey)) {
-            event.preventDefault();
+        if ((e.key === chatFocusKey && modKey) || (!chatFocusKey && e.key === chatModKey)) {
+            e.preventDefault();
             chatInput.focus();
         }
+    }
+
+    function initPostImage() {
+        let postWrapper = document.getElementById('scsPostWrapper');
+        let $postWrapper = $('#scsPostWrapper');
+        discordTag = localStorage.getItem('scsDiscord');
+        let scsDiscord = document.getElementById('scsDiscord');
+        if (discordTag) {
+            scsDiscord.value = discordTag;
+        }
+        if (postWrapper && !discordTag) {
+            postWrapper.setAttribute('title', 'I need your Discord username!');
+            postWrapper.classList.add('disabled');
+        }
+        $postWrapper.tooltip();
+        scsDiscord.addEventListener('change', e => {
+            localStorage.setItem('scsDiscord', e.target.value);
+            discordTag = e.target.value;
+            if (postWrapper) {
+                if (discordTag) {
+                    postWrapper.setAttribute('title', 'Post the current image to D.S.');
+                    postWrapper.classList.remove('disabled');
+                } else {
+                    postWrapper.setAttribute('title', 'I need your Discord username!');
+                    postWrapper.classList.add('disabled');
+                }
+                $postWrapper.tooltip('fixTitle');
+            }
+        });
+        document.getElementById('scsPostAwesome').addEventListener('click', e => {
+            postImage(channels.awesome);
+        });
+        document.getElementById('scsPostGuess').addEventListener('click', e => {
+            postImage(channels.guess);
+        });
+        document.getElementById('scsPostShame').addEventListener('click', e => {
+            postImage(channels.shame);
+        });
+        let debounceTimeout;
+        function clearDebounce() {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = 0;
+        }
+        function postImage(channel) {
+            let canvasImage = canvas.toDataURL().split(',')[1];
+            let wordParsed = solutionText.innerText;
+            word = currentWord.innerText;
+            let timeLeft = timer.innerText;
+            if (debounceTimeout) {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(clearDebounce, 3000);
+            } else if (discordTag) {
+                debounceTimeout = setTimeout(clearDebounce, 3000);
+                if (channel.name === channels.guess.name) {
+                    let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
+                    words.forEach((v, i, a) => { a[i] = v.length.toString(10); });
+                    words = words.join(' ');
+                    wordParsed = word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
+                } else {
+                    if (wordParsed.startsWith('The word was: ')) {
+                        word = wordParsed.slice(14);
+                    }
+                    wordParsed = word.replace(/_/g, '\\*');
+                }
+                let data = new FormData();
+                data.append('image', canvasImage);
+                data.append('name', Date.now() + '.png');
+                data.append('title', word + ' by ' + artist);
+                data.append('description', 'Posted by ' + discordTag);
+                fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
+                    body: data
+                }).then(res => {
+                    res.json().then(res2 => {
+                        fetch(channel.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                embeds: [{
+                                    title: channel.name,
+                                    description: wordParsed + ' by ' + artist + '\n' + res2.data.link + ' with ' + timeLeft + ' sec(s) remaining',
+                                    url: 'https://github.com/sbarrack/skribbl-community-scripts/',
+                                    color: colors[Math.floor(Math.random() * colors.length)],
+                                    timestamp: new Date(),
+                                    footer: { text: discordTag },
+                                    image: { url: res2.data.link }
+                                }]
+                            })
+                        }).then(res => console.debug(res))
+                        .catch(err => console.debug(err));
+                    }).catch(err => console.debug(err));
+                }).catch(err => console.debug(err));
+            }
+        }
+    }
+
+    function initGamemode() {
+        currentGamemode = sessionStorage.getItem('scsGamemode');
+        let gamemodeInput = document.getElementById('scsGamemode');
+        gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
+        gamemodeInput.onchange = function (e) {
+            sessionStorage.setItem('scsGamemode', e.target.value);
+            currentGamemode = e.target.value;
+        };
     }
 
     function toggleHotkeys(e) {
@@ -580,59 +686,6 @@
         brushSizes = document.querySelectorAll('[data-size]');
     }
 
-    function initGamemode() {
-        currentGamemode = sessionStorage.getItem('scsGamemode');
-        let gamemodeInput = document.getElementById('scsGamemode');
-        gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
-
-        gamemodeInput.onchange = function (event) {
-            sessionStorage.setItem('scsGamemode', event.target.value);
-            currentGamemode = event.target.value;
-        };
-    }
-
-    function initPostImage() {
-        let postWrapper;
-
-        discordTag = localStorage.getItem('scsDiscord');
-        if (discordTag) {
-            document.getElementById('scsDiscord').value = discordTag;
-        }
-        document.getElementById('scsDiscord').onchange = function (event) {
-            localStorage.setItem('scsDiscord', event.target.value);
-            discordTag = event.target.value;
-            if (postWrapper) {
-                if (discordTag) {
-                    $('#scsPostWrapper').attr('title', 'Post the current image to D.S.').tooltip('fixTitle');
-                    postWrapper.classList.remove('disabled');
-                } else {
-                    $('#scsPostWrapper').attr('title', 'I need your Discord username!').tooltip('fixTitle');
-                    postWrapper.classList.add('disabled');
-                }
-            }
-        };
-
-        document.getElementById('containerFreespace').innerHTML = customUI;
-        document.getElementById('containerFreespace').style.background = 'none';
-
-        postWrapper = document.getElementById('scsPostWrapper');
-        if (postWrapper && !discordTag) {
-            postWrapper.setAttribute('title', 'I need your Discord username!');
-            postWrapper.classList.add('disabled');
-        }
-        $('#scsPostWrapper').tooltip();
-
-        document.getElementById('scsPostAwesome').onclick = function (e) {
-            postImage(channels.awesome);
-        };
-        document.getElementById('scsPostGuess').onclick = function (e) {
-            postImage(channels.guess);
-        };
-        document.getElementById('scsPostShame').onclick = function (e) {
-            postImage(channels.shame);
-        };
-    }
-
     function initGameObserver() {
         let gameObserver = new MutationObserver(mutations => {
             let screenGame = mutations[0].target;
@@ -764,70 +817,4 @@
             childList: true
         });
     }
-
-    let debouncePostTimeout;
-    function clearDebounce() {
-        clearTimeout(debouncePostTimeout);
-        debouncePostTimeout = 0;
-    }
-    function postImage(channel) {
-        let canvasImage = canvas.toDataURL().split(',')[1];
-        let wordParsed = solutionText.innerText;
-        word = currentWord.innerText;
-        let timeLeft = timer.innerText;
-        if (debouncePostTimeout) {
-            clearTimeout(debouncePostTimeout);
-            debouncePostTimeout = setTimeout(clearDebounce, 3000);
-        } else {
-            if (discordTag) {
-                debouncePostTimeout = setTimeout(clearDebounce, 3000);
-                if (channel.name === channels.guess.name) {
-                    let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
-                    words.forEach((v, i, a) => { a[i] = v.length.toString(10); });
-                    words = words.join(' ');
-                    wordParsed = word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
-                } else {
-                    if (wordParsed.startsWith('The word was: ')) {
-                        word = wordParsed.slice(14);
-                    }
-                    wordParsed = word.replace(/_/g, '\\*');
-                }
-    
-                let data = new FormData();
-                data.append('image', canvasImage);
-                data.append('name', Date.now() + '.png');
-                data.append('title', word + ' by ' + artist);
-                data.append('description', 'Posted by ' + discordTag);
-    
-                fetch('https://api.imgur.com/3/image', {
-                    method: 'POST',
-                    headers: new Headers({ 'Authorization': 'Client-ID b5db76b67498dd6' }),
-                    body: data
-                }).then(res => {
-                    res.json().then(res2 => {
-                        fetch(channel.url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                embeds: [{
-                                    title: channel.name,
-                                    description: wordParsed + ' by ' + artist + '\n' + res2.data.link + ' with ' + timeLeft + ' sec(s) remaining',
-                                    url: 'https://github.com/sbarrack/skribbl-community-scripts/',
-                                    color: colors[Math.floor(Math.random() * colors.length)],
-                                    timestamp: new Date(),
-                                    footer: { text: discordTag },
-                                    image: { url: res2.data.link }
-                                }]
-                            })
-                        }).then(res => console.debug(res)).catch(err => handleErr(err));
-                    }).catch(err => handleErr(err));
-                }).catch(err => handleErr(err));
-            }
-        }
-    }
-
-    function handleErr(err) {
-        console.debug(err);
-    }
-
 })(jQuery);
