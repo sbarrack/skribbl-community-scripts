@@ -247,7 +247,7 @@
         initChatFocus();
         initPostImage();
         initGamemode();
-        
+
         initBrushSelect();
         initBrushColor();
         initRainbow();
@@ -422,10 +422,10 @@
         currentGamemode = sessionStorage.getItem('scsGamemode');
         let gamemodeInput = document.getElementById('scsGamemode');
         gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
-        gamemodeInput.onchange = function (e) {
+        gamemodeInput.addEventListener('change', e => {
             sessionStorage.setItem('scsGamemode', e.target.value);
             currentGamemode = e.target.value;
-        };
+        });
     }
 
     function toggleHotkeys(e) {
@@ -443,22 +443,22 @@
         }
     }
 
-    function selectBrushSize(event) {
-        if (!['1', '2', '3', '4'].includes(event.key)) {
+    function selectBrushSize(e) {
+        if (!['1', '2', '3', '4'].includes(e.key)) {
             return;
         }
-        if ((sizeSelection === '1-4' && event.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && event.code.match(/Numpad[0-9]/))) {
-            brushSizes[+event.key - 1].click();
+        if ((sizeSelection === '1-4' && e.code.match(/Digit[0-9]/)) || (sizeSelection === 'Numpad 1-4' && e.code.match(/Numpad[0-9]/))) {
+            brushSizes[+e.key - 1].click();
         }
     }
 
-    function selectBrushColor(event) {
-        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
+    function selectBrushColor(e) {
+        if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
             return;
         }
-        if ((colorSelection === '0-9' && event.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && event.code.match(/Numpad[0-9]/))) {
+        if ((colorSelection === '0-9' && e.code.match(/Digit[0-9]/)) || (colorSelection === 'Numpad 0-9' && e.code.match(/Numpad[0-9]/))) {
             let targetColor = 11;
-            if (event.key === '0') {
+            if (e.key === '0') {
                 switch (lastColorIdx) {
                     case 11:
                         targetColor = 0;
@@ -469,10 +469,10 @@
                     case 1:
                         targetColor = 12;
                 }
-            } else if (lastColorIdx == +event.key + 1) {
-                targetColor = +event.key + 12;
+            } else if (lastColorIdx == +e.key + 1) {
+                targetColor = +e.key + 12;
             } else {
-                targetColor = +event.key + 1;
+                targetColor = +e.key + 1;
             }
             brushColors[targetColor].click();
             lastColorIdx = targetColor;
@@ -506,14 +506,14 @@
         palletCheckedInput = document.getElementById('scsPalletChecked');
         palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
 
-        palletInput.onchange = function (event) {
-            let parsedPallet = JSON.stringify(JSON.parse(event.target.value));
+        palletInput.addEventListener('change', e => {
+            let parsedPallet = JSON.stringify(JSON.parse(e.target.value));
             localStorage.setItem('scsPallet', parsedPallet);
             pallet = parsedPallet;
-        };
-        palletCheckedInput.onchange = function (event) {
-            localStorage.setItem('scsPalletChecked', event.target.checked);
-        };
+        });
+        palletCheckedInput.addEventListener('change', e => {
+            localStorage.setItem('scsPalletChecked', e.target.checked);
+        });
     }
 
     function initHatching() {
@@ -534,7 +534,7 @@
         document.body.appendChild(scsAnchor);
 
         let hatchInterval = 0;
-        hatchingTool.onclick = function(event) {
+        hatchingTool.addEventListener('click', e => {
             hatchingTool.classList.toggle('scsToolActive');
             if (hatchingTool.classList.contains('scsToolActive')) {
                 if (hatchetAnchor.x && hatchetAnchor.y) {
@@ -548,23 +548,23 @@
                     hatchInterval = 0;
                 }
             }
-        };
+        });
 
-        document.addEventListener('mousedown', event => {
+        document.addEventListener('mousedown', e => {
             if (hatchingTool.classList.contains('scsToolActive')) {
-                if (event.button == 0) {
+                if (e.button == 0) {
                     isHatcheting = true;
-                } else if (event.button == 1) {
+                } else if (e.button == 1) {
                     scsAnchor.style.display = 'block';
-                    Object.assign(hatchetAnchor, { x: event.clientX, y: event.clientY });
-                    scsAnchor.style.top = (event.clientY - 4) + 'px';
-                    scsAnchor.style.left = (event.clientX - 13).toString(10) + 'px';
+                    Object.assign(hatchetAnchor, { x: e.clientX, y: e.clientY });
+                    scsAnchor.style.top = (e.clientY - 4) + 'px';
+                    scsAnchor.style.left = (e.clientX - 13).toString(10) + 'px';
                 }
             }
         });
-        document.addEventListener('mouseup', event => {
+        document.addEventListener('mouseup', e => {
             if (hatchingTool.classList.contains('scsToolActive')) {
-                if (event.button == 0) {
+                if (e.button == 0) {
                     isHatcheting = false;
                 }
             }
@@ -591,9 +591,9 @@
         secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
         $(primaryActiveColor).attr('title', 'Color (T)oggle').tooltip('fixTitle');
 
-        primaryActiveColor.onclick = function (event) {
+        primaryActiveColor.addEventListener('click', e => {
             switchColors();
-        };
+        });
 
         let eraserTool = document.querySelector('[data-tool="erase"]');
         rainbowTool = eraserTool.cloneNode(true);
@@ -605,7 +605,7 @@
 
         rainbowSpeed = document.getElementById('scsRainbowSpeed');
         let rainbowInterval = 0;
-        rainbowTool.onclick = function(event) {
+        rainbowTool.addEventListener('click', e => {
             rainbowTool.classList.toggle('scsToolActive');
             if (rainbowTool.classList.contains('scsToolActive')) {
                 rainbowInterval = setInterval(rainbowCycle, rainbowSpeed.value);
@@ -615,23 +615,22 @@
                     rainbowInterval = 0;
                 }
             }
-        };
+        });
 
         rainbowMode = localStorage.getItem('scsRainbowMode');
         let rainbowSelect = document.getElementById('scsRainbowMode');
         rainbowSelect.value = rainbowMode ? rainbowMode : '1-cycle';
 
-        rainbowSelect.onchange = function (event) {
-            localStorage.setItem('scsRainbowMode', event.target.value);
-            rainbowMode = event.target.value;
-        };
-
-        rainbowSpeed.onchange = function(event) {
+        rainbowSelect.addEventListener('change', e => {
+            localStorage.setItem('scsRainbowMode', e.target.value);
+            rainbowMode = e.target.value;
+        });
+        rainbowSpeed.addEventListener('change', e => {
             if (rainbowInterval) {
                 clearInterval(rainbowInterval);
-                rainbowInterval = setInterval(rainbowCycle, event.target.value);
+                rainbowInterval = setInterval(rainbowCycle, e.target.value);
             }
-        };
+        });
     }
 
     let rainbowIdx = 0;
@@ -665,10 +664,10 @@
         let colorInput = document.getElementById('scsBrushColor');
         colorInput.value = colorSelection ? colorSelection : 'None';
 
-        colorInput.onchange = function (event) {
-            localStorage.setItem('scsBrushColor', event.target.value);
-            colorSelection = event.target.value;
-        };
+        colorInput.addEventListener('change', e => {
+            localStorage.setItem('scsBrushColor', e.target.value);
+            colorSelection = e.target.value;
+        });
 
         brushColors = document.querySelectorAll('[data-color]');
     }
@@ -678,10 +677,10 @@
         let sizeInput = document.getElementById('scsBrushSize');
         sizeInput.value = sizeSelection ? sizeSelection : 'None';
 
-        sizeInput.onchange = function (event) {
-            localStorage.setItem('scsBrushSize', event.target.value);
-            sizeSelection = event.target.value;
-        };
+        sizeInput.addEventListener('change', e => {
+            localStorage.setItem('scsBrushSize', e.target.value);
+            sizeSelection = e.target.value;
+        });
 
         brushSizes = document.querySelectorAll('[data-size]');
     }
