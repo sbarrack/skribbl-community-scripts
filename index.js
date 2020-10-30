@@ -210,11 +210,8 @@
     let lastColorIdx = 11;
     let playerBlacklist = [];
 
-    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey, chatInput, containerFreespace;
-    let discordTag, artist, word;
-    let currentGamemode;
-    let sizeSelection, brushSizes;
-    let colorSelection, brushColors;
+    let canvas, currentWord, solutionText, timer, chatModKey, chatFocusKey, chatInput, containerFreespace, sizeSelection, brushSizes, colorSelection, brushColors, currentGamemode, discordTag, artist;
+    
     let rainbowMode, rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
     let hatchingTool, isHatcheting;
     let scsAnchor;
@@ -247,9 +244,8 @@
         initChatFocus();
         initPostImage();
         initGamemode();
-
         initBrushSelect();
-        initBrushColor();
+
         initRainbow();
         initHatching();
         initPallet();
@@ -367,7 +363,7 @@
         function postImage(channel) {
             let canvasImage = canvas.toDataURL().split(',')[1];
             let wordParsed = solutionText.innerText;
-            word = currentWord.innerText;
+            let word = currentWord.innerText;
             let timeLeft = timer.innerText;
             if (debounceTimeout) {
                 clearTimeout(debounceTimeout);
@@ -441,6 +437,26 @@
             Object.assign(hatchetAnchor, { x: null, y: null });
             scsAnchor.style.display = 'none';
         }
+    }
+
+    function initBrushSelect() {
+        colorSelection = localStorage.getItem('scsBrushColor');
+        let colorInput = document.getElementById('scsBrushColor');
+        colorInput.value = colorSelection ? colorSelection : 'None';
+        sizeSelection = localStorage.getItem('scsBrushSize');
+        let sizeInput = document.getElementById('scsBrushSize');
+        sizeInput.value = sizeSelection ? sizeSelection : 'None';
+        brushColors = document.querySelectorAll('[data-color]');
+        brushSizes = document.querySelectorAll('[data-size]');
+
+        sizeInput.addEventListener('change', e => {
+            localStorage.setItem('scsBrushSize', e.target.value);
+            sizeSelection = e.target.value;
+        });
+        colorInput.addEventListener('change', e => {
+            localStorage.setItem('scsBrushColor', e.target.value);
+            colorSelection = e.target.value;
+        });
     }
 
     function selectBrushSize(e) {
@@ -657,32 +673,6 @@
         let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
         secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
         brushColors[secondaryColorIdx].click();
-    }
-
-    function initBrushColor() {
-        colorSelection = localStorage.getItem('scsBrushColor');
-        let colorInput = document.getElementById('scsBrushColor');
-        colorInput.value = colorSelection ? colorSelection : 'None';
-
-        colorInput.addEventListener('change', e => {
-            localStorage.setItem('scsBrushColor', e.target.value);
-            colorSelection = e.target.value;
-        });
-
-        brushColors = document.querySelectorAll('[data-color]');
-    }
-
-    function initBrushSelect() {
-        sizeSelection = localStorage.getItem('scsBrushSize');
-        let sizeInput = document.getElementById('scsBrushSize');
-        sizeInput.value = sizeSelection ? sizeSelection : 'None';
-
-        sizeInput.addEventListener('change', e => {
-            localStorage.setItem('scsBrushSize', e.target.value);
-            sizeSelection = e.target.value;
-        });
-
-        brushSizes = document.querySelectorAll('[data-size]');
     }
 
     function initGameObserver() {
