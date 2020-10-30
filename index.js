@@ -235,7 +235,9 @@
         panelElem.innerHTML = keybindPanel;
         let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
         userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
-        $('[data-tool="pen"] > .toolIcon').attr('title', '(B)rush (middle click to pick colors)').tooltip('fixTitle');
+        let penTooltip = document.querySelector('[data-tool="pen"] > .toolIcon')
+        penTooltip.setAttribute('title', '(B)rush (middle click to pick colors)');
+        $(penTooltip).tooltip('fixTitle');
 
         containerFreespace = document.getElementById('containerFreespace');
         containerFreespace.innerHTML = customUI;
@@ -321,7 +323,7 @@
 
     function initPostImage() {
         let postWrapper = document.getElementById('scsPostWrapper');
-        let $postWrapper = $('#scsPostWrapper');
+        let $postWrapper = $(postWrapper);
         discordTag = localStorage.getItem('scsDiscord');
         let scsDiscord = document.getElementById('scsDiscord');
         if (discordTag) {
@@ -605,7 +607,8 @@
         secondaryActiveColor.classList.remove('colorPreview');
         secondaryActiveColor.style.backgroundColor = colorsRGB[0];
         secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
-        $(primaryActiveColor).attr('title', 'Color (T)oggle').tooltip('fixTitle');
+        primaryActiveColor.setAttribute('title', 'Color (T)oggle');
+        $(primaryActiveColor).tooltip('fixTitle');
 
         primaryActiveColor.addEventListener('click', e => {
             switchColors();
