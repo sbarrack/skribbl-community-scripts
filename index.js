@@ -294,13 +294,6 @@
   const domElements = {};
   let primaryActiveColor, secondaryActiveColor;
   let isHatcheting;
-  let pallet, palletCheckedInput;
-
-  if (document.readyState === 'complete') {
-    init();
-  } else {
-    window.addEventListener('load', init);
-  }
 
   function switchColors() {
     let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
@@ -650,23 +643,22 @@
   }
 
   function initPallet() {
-    pallet = localStorage.getItem('scsPallet');
     let palletInput = document.getElementById('scsPallet');
-    if (pallet) {
-      palletInput.value = pallet;
+    if (settings.scsPallet) {
+      palletInput.value = settings.scsPallet;
     }
 
-    palletCheckedInput = document.getElementById('scsPalletChecked');
+    let palletCheckedInput = document.getElementById('scsPalletChecked');
     palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
-
     palletInput.addEventListener('change', e => {
-      let parsedPallet = JSON.stringify(JSON.parse(e.target.value));
-      settings.scsPallet = parsedPallet;
-      pallet = parsedPallet;
+      let prettyPallet = JSON.stringify(JSON.parse(e.target.value));
+      settings.scsPallet = prettyPallet;
     });
     palletCheckedInput.addEventListener('change', e => {
       settings.scsPalletChecked = e.target.checked;
     });
+
+    domElements.palletCheckedInput = palletCheckedInput;
   }
 
   function hatchCycle() {
@@ -709,7 +701,7 @@
     );
     hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
     $(hatchingTool.firstChild).tooltip();
-    
+
     // Onclick logic
     let hatchInterval = 0;
     hatchingTool.addEventListener('click', e => {
@@ -787,7 +779,6 @@
     rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
     $(rainbowTool.firstChild).tooltip();
 
-    
     // Rainbow Interval when tool is clicked
     let rainbowInterval;
     rainbowTool.addEventListener('click', e => {
@@ -800,7 +791,6 @@
       }
     });
     domElements.rainbowTool = rainbowTool;
-
 
     // Rainbow mode select
     let rainbowSelect = document.getElementById('scsRainbowMode');
@@ -871,43 +861,42 @@
           }
         }
 
-        if (pallet && palletCheckedInput.checked) {
-          pallet = JSON.parse(pallet);
-          if (pallet) {
-            if (pallet.colors) {
-              pallet.colors.forEach((v, i, a) => {
-                if (Number.isSafeInteger(v.index)) {
-                  if ((v.index > 0 && v.index < 11) || (v.index > 11 && v.index < 22)) {
-                    if (/^#([0-9a-f]{3}){1,2}$/i.test(v.color)) {
-                      let t = v.color.length == 7;
-                      brushColors[v.index].style.backgroundColor = v.color;
-                      colors[v.index] = parseInt(v.color.slice(1), 16);
-                      colorsRGB[v.index] =
-                        'rgb(' +
-                        parseInt(v.color.slice(1, t ? 3 : 2), 16).toString(10) +
-                        parseInt(v.color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10) +
-                        parseInt(v.color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10) +
-                        ')';
-                    } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(v.color)) {
-                      colorsRGB[v.index] = v.color;
-                      let components = v.color.slice(4, v.color.length - 1).split(', ');
-                      components.forEach((w, j, b) => {
-                        b[j] = parseInt(w, 10).toString(16);
-                      });
-                      components = components.join('');
-                      brushColors[v.index].style.backgroundColor = '#' + components;
-                      colors[v.index] = parseInt(components, 16);
-                    } else {
-                      console.error(`Invalid color ${v.color} at index ${v.index}!`);
-                    }
+        if (settings.scsPallet && domElements.palletCheckedInput.checked) {
+          const pallet = JSON.parse(settings.scsPallet);
+          if (pallet && pallet.colors) {
+            pallet.colors.forEach(({color, index}) => {
+              if (Number.isSafeInteger(index)) {
+                if ((index > 0 && index < 11) || (index > 11 && index < 22)) {
+                  if (/^#([0-9a-f]{3}){1,2}$/i.test(color)) { // Test for Hex
+                    let t = color.length == 7;
+                    brushColors[index].style.backgroundColor = color;
+                    colors[index] = parseInt(color.slice(1), 16);
+                    colorsRGB[index] =
+                      'rgb(' +
+                      parseInt(color.slice(1, t ? 3 : 2), 16).toString(10) +
+                      parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10) +
+                      parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10) +
+                      ')';
+                  } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) { // Test for RGB
+                    colorsRGB[index] = color;
+                    let components = color.slice(4, color.length - 1).split(', ');
+                    components.forEach((w, j, b) => {
+                      b[j] = parseInt(w, 10).toString(16);
+                    });
+                    components = components.join('');
+                    brushColors[index].style.backgroundColor = '#' + components;
+                    colors[index] = parseInt(components, 16);
+                  } else {
+                    console.error(`Invalid color ${color} at index ${index}!`);
                   }
                 }
-              });
-            }
+              }
+            });
           }
         }
       }
     });
+
     gameObserver.observe(document.getElementById('screenGame'), {
       attributes: true,
       attributeFilter: ['style'],
@@ -922,6 +911,7 @@
         }, 3000);
       }
     });
+
     let playersObserver = new MutationObserver(mutations => {
       if (mutations.length > 1) {
         document.querySelectorAll('.drawing').forEach(div => {
@@ -938,6 +928,7 @@
         });
       }
     });
+
     playersObserver.observe(document.getElementById('containerGamePlayers'), {
       childList: true,
     });
@@ -955,5 +946,11 @@
     chatObserver.observe(document.getElementById('boxMessages'), {
       childList: true,
     });
+  }
+
+  if (document.readyState === 'complete') {
+    init();
+  } else {
+    window.addEventListener('load', init);
   }
 })(jQuery);
