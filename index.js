@@ -302,6 +302,27 @@
     window.addEventListener('load', init);
   }
 
+  function switchColors() {
+    let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
+    secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
+    brushColors[secondaryColorIdx].click();
+  }
+
+  function initColorToggle() {
+    // Color Toggle
+    primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
+
+    secondaryActiveColor = primaryActiveColor.cloneNode();
+    secondaryActiveColor.classList.add('scsColorPreview');
+    secondaryActiveColor.classList.remove('colorPreview');
+    secondaryActiveColor.style.backgroundColor = colorsRGB[0];
+    secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
+
+    primaryActiveColor.setAttribute('title', 'Color (T)oggle');
+    $(primaryActiveColor).tooltip('fixTitle');
+    primaryActiveColor.addEventListener('click', switchColors);
+  }
+
   function init() {
     canvas = document.getElementById('canvasGame');
     solutionText = document.querySelector('#overlay .text');
@@ -322,6 +343,7 @@
     containerFreespace.innerHTML = customUI;
     containerFreespace.style.background = 'none';
 
+    initColorToggle();
     initChatFocus();
     initPostImage();
     initGamemode();
@@ -743,24 +765,6 @@
       rainbowIdx = (rainbowIdx + 1) % 22;
     }
 
-    
-    function switchColors() {
-      let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
-      secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
-      brushColors[secondaryColorIdx].click();
-    }
-
-    // Color Toggle
-    primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
-    secondaryActiveColor = primaryActiveColor.cloneNode();
-    secondaryActiveColor.classList.add('scsColorPreview');
-    secondaryActiveColor.classList.remove('colorPreview');
-    secondaryActiveColor.style.backgroundColor = colorsRGB[0];
-    secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
-    primaryActiveColor.setAttribute('title', 'Color (T)oggle');
-    $(primaryActiveColor).tooltip('fixTitle');
-    primaryActiveColor.addEventListener('click', switchColors);
-
     // Rainbow Tool
     let eraserTool = document.querySelector('[data-tool="erase"]');
     rainbowTool = eraserTool.cloneNode(true);
@@ -790,6 +794,8 @@
         rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
       }
     });
+    
+    rainbowSpeed = rainbowSpeedInput; // TODO: Move to object of DOM elements or something
 
     // Rainbow Interval when tool is clicked
     let rainbowInterval;
