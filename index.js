@@ -263,7 +263,7 @@
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
     settingKeys.forEach(key => {
-      if (settings[key]) {
+      if (settings[key] !== undefined) {
         localStorage.setItem(key, settings[key]);
       }
     });
@@ -288,7 +288,7 @@
     artist;
 
   let primaryActiveColor, secondaryActiveColor;
-  let isHatcheting;
+  let isHatcheting, hatchInterval;
 
   function switchColors() {
     const secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
@@ -546,6 +546,90 @@
     }
   }
 
+  function hatchCycle() {
+    if (isHatcheting && hatchetAnchor.x && hatchetAnchor.y) {
+      document.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: hatchetAnchor.x,
+          clientY: hatchetAnchor.y,
+        })
+      );
+    }
+  }
+
+  function initHatching() {
+    // Make the anchor image
+    const scsAnchor = document.createElement('img');
+    scsAnchor.id = 'scsAnchor';
+    scsAnchor.style.display = 'none';
+    scsAnchor.style.position = 'absolute';
+    scsAnchor.style.pointerEvents = 'none';
+    scsAnchor.src =
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+    document.body.appendChild(scsAnchor);
+
+    scsElements.scsAnchor = scsAnchor;
+
+    // Make the tool
+    const eraserTool = document.querySelector('[data-tool="erase"]');
+    let hatchingTool = eraserTool.cloneNode(true);
+    hatchingTool.setAttribute('data-tool', 'scsHatching');
+    hatchingTool.firstChild.setAttribute(
+      'title',
+      '(H)atching (middle click to anchor, space to unanchor)'
+    );
+    hatchingTool.firstChild.setAttribute(
+      'src',
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif'
+    );
+    hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
+    $(hatchingTool.firstChild).tooltip();
+
+    // onClick logic
+    hatchingTool.addEventListener('click', e => {
+      hatchingTool.classList.toggle('scsToolActive');
+      if (hatchingTool.classList.contains('scsToolActive')) {
+        if (hatchetAnchor.x && hatchetAnchor.y) {
+          scsAnchor.style.display = 'block';
+        }
+        hatchInterval = setInterval(hatchCycle, settings.scsRainbowSpeed);
+      } else {
+        scsAnchor.style.display = 'none';
+        if (hatchInterval) {
+          clearInterval(hatchInterval);
+          hatchInterval = 0;
+        }
+      }
+    });
+
+    // Hatchet functionality
+    document.addEventListener('mousedown', e => {
+      if (hatchingTool.classList.contains('scsToolActive')) {
+        if (e.button == 0) {
+          isHatcheting = true;
+        } else if (e.button == 1) {
+          hatchetAnchor.x = e.clientX;
+          hatchetAnchor.y = e.clientY;
+          scsAnchor.style.display = 'block';
+          scsAnchor.style.top = e.clientY - 4 + 'px';
+          scsAnchor.style.left = (e.clientX - 13).toString(10) + 'px';
+        }
+      }
+    });
+
+    document.addEventListener('mouseup', e => {
+      if (hatchingTool.classList.contains('scsToolActive')) {
+        if (e.button == 0) {
+          isHatcheting = false;
+        }
+      }
+    });
+
+    scsElements.hatchingTool = hatchingTool;
+  }
+
   function initRainbow() {
     // Rainbow tick (change colors very fast)
     let rainbowIdx = 0;
@@ -609,93 +693,15 @@
         clearInterval(rainbowInterval);
         rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
       }
+
+      if (hatchInterval) {
+        clearInterval(hatchInterval);
+        hatchInterval = setInterval(hatchCycle, settings.scsRainbowSpeed);
+      }
+
+      rainbowSpeedInput.blur();
     });
     scsElements.rainbowSpeed = rainbowSpeedInput;
-  }
-
-  function hatchCycle() {
-    if (isHatcheting && hatchetAnchor.x && hatchetAnchor.y) {
-      document.dispatchEvent(
-        new MouseEvent('mousemove', {
-          bubbles: true,
-          cancelable: true,
-          clientX: hatchetAnchor.x,
-          clientY: hatchetAnchor.y,
-        })
-      );
-    }
-  }
-
-  function initHatching() {
-    // Make the anchor image
-    const scsAnchor = document.createElement('img');
-    scsAnchor.id = 'scsAnchor';
-    scsAnchor.style.display = 'none';
-    scsAnchor.style.position = 'absolute';
-    scsAnchor.style.pointerEvents = 'none';
-    scsAnchor.src =
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
-    document.body.appendChild(scsAnchor);
-
-    scsElements.scsAnchor = scsAnchor;
-
-    // Make the tool
-    const eraserTool = document.querySelector('[data-tool="erase"]');
-    let hatchingTool = eraserTool.cloneNode(true);
-    hatchingTool.setAttribute('data-tool', 'scsHatching');
-    hatchingTool.firstChild.setAttribute(
-      'title',
-      '(H)atching (middle click to anchor, space to unanchor)'
-    );
-    hatchingTool.firstChild.setAttribute(
-      'src',
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/hatchet.gif'
-    );
-    hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
-    $(hatchingTool.firstChild).tooltip();
-
-    // onClick logic
-    let hatchInterval;
-    hatchingTool.addEventListener('click', e => {
-      hatchingTool.classList.toggle('scsToolActive');
-      if (hatchingTool.classList.contains('scsToolActive')) {
-        if (hatchetAnchor.x && hatchetAnchor.y) {
-          scsAnchor.style.display = 'block';
-        }
-        hatchInterval = setInterval(hatchCycle, scsElements.rainbowSpeed.value);
-      } else {
-        scsAnchor.style.display = 'none';
-        if (hatchInterval) {
-          clearInterval(hatchInterval);
-          hatchInterval = 0;
-        }
-      }
-    });
-
-    // Hatchet functionality
-    document.addEventListener('mousedown', e => {
-      if (hatchingTool.classList.contains('scsToolActive')) {
-        if (e.button == 0) {
-          isHatcheting = true;
-        } else if (e.button == 1) {
-          hatchetAnchor.x = e.clientX;
-          hatchetAnchor.y = e.clientY;
-          scsAnchor.style.display = 'block';
-          scsAnchor.style.top = e.clientY - 4 + 'px';
-          scsAnchor.style.left = (e.clientX - 13).toString(10) + 'px';
-        }
-      }
-    });
-
-    document.addEventListener('mouseup', e => {
-      if (hatchingTool.classList.contains('scsToolActive')) {
-        if (e.button == 0) {
-          isHatcheting = false;
-        }
-      }
-    });
-
-    scsElements.hatchingTool = hatchingTool;
   }
 
   function initPallet() {
@@ -744,6 +750,7 @@
     });
   }
 
+  window.settings = settings;
   function initGameObserver() {
     const gameObserver = new MutationObserver(mutations => {
       const screenGame = mutations[0].target;
@@ -928,8 +935,8 @@
     initGamemode();
     initBrushSelect();
 
-    initRainbow();
     initHatching();
+    initRainbow();
     initPallet();
     initChatBlacklist();
     initGameObserver();
