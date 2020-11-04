@@ -750,7 +750,6 @@
     });
   }
 
-  window.settings = settings;
   function initGameObserver() {
     const gameObserver = new MutationObserver(mutations => {
       const screenGame = mutations[0].target;
