@@ -260,7 +260,6 @@
 
   // Settings
   const settings = {};
-  window.scsSettings = settings; // TODO: Remove
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
     settingKeys.forEach(key => {
@@ -704,11 +703,12 @@
     }
 
     let palletCheckedInput = document.getElementById('scsPalletChecked');
-    palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
+    palletCheckedInput.checked = settings.scsPalletChecked === 'true';
     palletInput.addEventListener('change', e => {
       let prettyPallet = JSON.stringify(JSON.parse(e.target.value));
       settings.scsPallet = prettyPallet;
     });
+
     palletCheckedInput.addEventListener('change', e => {
       settings.scsPalletChecked = e.target.checked;
     });
