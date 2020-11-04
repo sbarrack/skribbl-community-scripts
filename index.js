@@ -291,8 +291,9 @@
     discordTag,
     artist;
 
-  let rainbowTool, rainbowSpeed, primaryActiveColor, secondaryActiveColor;
-  let hatchingTool, isHatcheting;
+  const domElements = {};
+  let primaryActiveColor, secondaryActiveColor;
+  let isHatcheting;
   let scsAnchor;
   let pallet, palletCheckedInput;
 
@@ -364,7 +365,7 @@
       }
     });
     canvas.addEventListener('mousedown', e => {
-      if (e.button == 1 && !hatchingTool.classList.contains('scsToolActive')) {
+      if (e.button == 1 && !domElements.hatchingTool.classList.contains('scsToolActive')) {
         let rect = canvas.getBoundingClientRect();
         let color = Uint32Array.from(
           canvas
@@ -554,12 +555,12 @@
 
   function toggleHotkeys(e) {
     if (e.key === 'r') {
-      rainbowTool.click();
+      domElements.rainbowTool.click();
     } else if (e.key === 't') {
       switchColors();
     } else if (e.key === 'h') {
-      hatchingTool.click();
-    } else if (e.key === ' ' && hatchingTool.classList.contains('scsToolActive')) {
+      domElements.hatchingTool.click();
+    } else if (e.key === ' ' && domElements.hatchingTool.classList.contains('scsToolActive')) {
       e.preventDefault();
       e.stopPropagation();
       Object.assign(hatchetAnchor, { x: null, y: null });
@@ -669,9 +670,22 @@
     });
   }
 
+  function hatchCycle() {
+    if (isHatcheting && hatchetAnchor.x && hatchetAnchor.y) {
+      document.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          cancelable: true,
+          clientX: hatchetAnchor.x,
+          clientY: hatchetAnchor.y,
+        })
+      );
+    }
+  }
+
   function initHatching() {
     let eraserTool = document.querySelector('[data-tool="erase"]');
-    hatchingTool = eraserTool.cloneNode(true);
+    let hatchingTool = eraserTool.cloneNode(true);
     hatchingTool.setAttribute('data-tool', 'scsHatching');
     hatchingTool.firstChild.setAttribute(
       'title',
@@ -683,16 +697,7 @@
     );
     hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
     $(hatchingTool.firstChild).tooltip();
-
-    scsAnchor = document.createElement('img');
-    scsAnchor.id = 'scsAnchor';
-    scsAnchor.style.display = 'none';
-    scsAnchor.style.position = 'absolute';
-    scsAnchor.style.pointerEvents = 'none';
-    scsAnchor.src =
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
-    document.body.appendChild(scsAnchor);
-
+    
     let hatchInterval = 0;
     hatchingTool.addEventListener('click', e => {
       hatchingTool.classList.toggle('scsToolActive');
@@ -700,7 +705,7 @@
         if (hatchetAnchor.x && hatchetAnchor.y) {
           scsAnchor.style.display = 'block';
         }
-        hatchInterval = setInterval(hatchCycle, rainbowSpeed.value);
+        hatchInterval = setInterval(hatchCycle, domElements.rainbowSpeed.value);
       } else {
         scsAnchor.style.display = 'none';
         if (hatchInterval) {
@@ -715,13 +720,15 @@
         if (e.button == 0) {
           isHatcheting = true;
         } else if (e.button == 1) {
+          hatchetAnchor.x = e.clientX;
+          hatchetAnchor.y = e.clientY;
           scsAnchor.style.display = 'block';
-          Object.assign(hatchetAnchor, { x: e.clientX, y: e.clientY });
           scsAnchor.style.top = e.clientY - 4 + 'px';
           scsAnchor.style.left = (e.clientX - 13).toString(10) + 'px';
         }
       }
     });
+
     document.addEventListener('mouseup', e => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
@@ -729,19 +736,17 @@
         }
       }
     });
-  }
 
-  function hatchCycle() {
-    if (isHatcheting && hatchetAnchor.x && hatchetAnchor.y) {
-      document.dispatchEvent(
-        new MouseEvent('mousemove', {
-          bubbles: true,
-          cancelable: true,
-          clientX: hatchetAnchor.x,
-          clientY: hatchetAnchor.y,
-        })
-      );
-    }
+    domElements.hatchingTool = hatchingTool;
+
+    scsAnchor = document.createElement('img');
+    scsAnchor.id = 'scsAnchor';
+    scsAnchor.style.display = 'none';
+    scsAnchor.style.position = 'absolute';
+    scsAnchor.style.pointerEvents = 'none';
+    scsAnchor.src =
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+    document.body.appendChild(scsAnchor);
   }
 
   function initRainbow() {
@@ -767,7 +772,7 @@
 
     // Rainbow Tool
     let eraserTool = document.querySelector('[data-tool="erase"]');
-    rainbowTool = eraserTool.cloneNode(true);
+    let rainbowTool = eraserTool.cloneNode(true);
     rainbowTool.setAttribute('data-tool', 'scsRainbow');
     rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
     rainbowTool.firstChild.setAttribute(
@@ -776,6 +781,21 @@
     );
     rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
     $(rainbowTool.firstChild).tooltip();
+
+    
+    // Rainbow Interval when tool is clicked
+    let rainbowInterval;
+    rainbowTool.addEventListener('click', e => {
+      rainbowTool.classList.toggle('scsToolActive');
+      if (rainbowTool.classList.contains('scsToolActive')) {
+        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
+      } else if (rainbowInterval) {
+        clearInterval(rainbowInterval);
+        rainbowInterval = null;
+      }
+    });
+    domElements.rainbowTool = rainbowTool;
+
 
     // Rainbow mode select
     let rainbowSelect = document.getElementById('scsRainbowMode');
@@ -794,20 +814,7 @@
         rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
       }
     });
-    
-    rainbowSpeed = rainbowSpeedInput; // TODO: Move to object of DOM elements or something
-
-    // Rainbow Interval when tool is clicked
-    let rainbowInterval;
-    rainbowTool.addEventListener('click', e => {
-      rainbowTool.classList.toggle('scsToolActive');
-      if (rainbowTool.classList.contains('scsToolActive')) {
-        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
-      } else if (rainbowInterval) {
-        clearInterval(rainbowInterval);
-        rainbowInterval = null;
-      }
-    });
+    domElements.rainbowSpeed = rainbowSpeedInput;
   }
 
   function initGameObserver() {
