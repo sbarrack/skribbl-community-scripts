@@ -259,9 +259,9 @@ const settingKeys = [
 (function ($) {
   // Settings
   const settings = {};
-  settingKeys.forEach((key) => (settings[key] = localStorage.עetItem(key)));
+  settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
-    settingKeys.forEach((key) => {
+    settingKeys.forEach(key => {
       if (settings[key]) {
         localStorage.setItem(key, settings[key]);
       }
@@ -331,7 +331,7 @@ const settingKeys = [
     initChatBlacklist();
     initGameObserver();
 
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (document.activeElement.id !== 'inputChat') {
         focusChat(e);
         toggleHotkeys(e);
@@ -339,7 +339,7 @@ const settingKeys = [
         selectBrushColor(e);
       }
     });
-    canvas.addEventListener('mousedown', (e) => {
+    canvas.addEventListener('mousedown', e => {
       if (e.button == 1 && !hatchingTool.classList.contains('scsToolActive')) {
         let rect = canvas.getBoundingClientRect();
         let color = Uint32Array.from(
@@ -366,11 +366,11 @@ const settingKeys = [
     chatModKey = localStorage.getItem('scsChatFocus');
     focusKeybind.value = chatModKey ? chatModKey : 'None';
     chatFocusKey = focusKeybind2.value = localStorage.getItem('scsChatFocus2');
-    focusKeybind.addEventListener('change', (e) => {
+    focusKeybind.addEventListener('change', e => {
       settings.scsChatFocus = e.target.value;
       chatModKey = e.target.value;
     });
-    focusKeybind2.addEventListener('click', (e) => {
+    focusKeybind2.addEventListener('click', e => {
       document.addEventListener('keydown', bindKey);
       setTimeout(() => {
         document.removeEventListener('keydown', bindKey);
@@ -417,7 +417,7 @@ const settingKeys = [
       postWrapper.classList.add('disabled');
     }
     $postWrapper.tooltip();
-    scsDiscord.addEventListener('change', (e) => {
+    scsDiscord.addEventListener('change', e => {
       settings.scsDiscord = e.target.value;
       discordTag = e.target.value;
       if (postWrapper) {
@@ -431,13 +431,13 @@ const settingKeys = [
         $postWrapper.tooltip('fixTitle');
       }
     });
-    document.getElementById('scsPostAwesome').addEventListener('click', (e) => {
+    document.getElementById('scsPostAwesome').addEventListener('click', e => {
       postImage(channels.awesome);
     });
-    document.getElementById('scsPostGuess').addEventListener('click', (e) => {
+    document.getElementById('scsPostGuess').addEventListener('click', e => {
       postImage(channels.guess);
     });
-    document.getElementById('scsPostShame').addEventListener('click', (e) => {
+    document.getElementById('scsPostShame').addEventListener('click', e => {
       postImage(channels.shame);
     });
     let debounceTimeout;
@@ -456,7 +456,7 @@ const settingKeys = [
       } else if (discordTag) {
         debounceTimeout = setTimeout(clearDebounce, 3000);
         if (channel.name === channels.guess.name) {
-          let words = word.split(/(\s+)/).filter((e) => e.trim().length > 0);
+          let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
           words.forEach((v, i, a) => {
             a[i] = v.length.toString(10);
           });
@@ -479,10 +479,10 @@ const settingKeys = [
           headers: new Headers({ Authorization: 'Client-ID b5db76b67498dd6' }),
           body: data,
         })
-          .then((res) => {
+          .then(res => {
             res
               .json()
-              .then((res2) => {
+              .then(res2 => {
                 fetch(channel.url, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -508,12 +508,12 @@ const settingKeys = [
                     ],
                   }),
                 })
-                  .then((res) => console.debug(res))
-                  .catch((err) => console.debug(err));
+                  .then(res => console.debug(res))
+                  .catch(err => console.debug(err));
               })
-              .catch((err) => console.debug(err));
+              .catch(err => console.debug(err));
           })
-          .catch((err) => console.debug(err));
+          .catch(err => console.debug(err));
       }
     }
   }
@@ -522,7 +522,7 @@ const settingKeys = [
     currentGamemode = sessionStorage.getItem('scsGamemode');
     let gamemodeInput = document.getElementById('scsGamemode');
     gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
-    gamemodeInput.addEventListener('change', (e) => {
+    gamemodeInput.addEventListener('change', e => {
       sessionStorage.setItem('scsGamemode', e.target.value);
       currentGamemode = e.target.value;
     });
@@ -553,11 +553,11 @@ const settingKeys = [
     brushColors = document.querySelectorAll('[data-color]');
     brushSizes = document.querySelectorAll('[data-size]');
 
-    sizeInput.addEventListener('change', (e) => {
+    sizeInput.addEventListener('change', e => {
       settings.scsBrushSize = e.target.value;
       sizeSelection = e.target.value;
     });
-    colorInput.addEventListener('change', (e) => {
+    colorInput.addEventListener('change', e => {
       settings.scsBrushColor = e.target.value;
       colorSelection = e.target.value;
     });
@@ -606,7 +606,7 @@ const settingKeys = [
   }
 
   function initChatBlacklist() {
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (
         e.target.classList.contains('name') &&
         e.target.parentElement.parentElement.classList.contains('player')
@@ -635,12 +635,12 @@ const settingKeys = [
     palletCheckedInput = document.getElementById('scsPalletChecked');
     palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
 
-    palletInput.addEventListener('change', (e) => {
+    palletInput.addEventListener('change', e => {
       let parsedPallet = JSON.stringify(JSON.parse(e.target.value));
       settings.scsPallet = parsedPallet;
       pallet = parsedPallet;
     });
-    palletCheckedInput.addEventListener('change', (e) => {
+    palletCheckedInput.addEventListener('change', e => {
       settings.scsPalletChecked = e.target.checked;
     });
   }
@@ -670,7 +670,7 @@ const settingKeys = [
     document.body.appendChild(scsAnchor);
 
     let hatchInterval = 0;
-    hatchingTool.addEventListener('click', (e) => {
+    hatchingTool.addEventListener('click', e => {
       hatchingTool.classList.toggle('scsToolActive');
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (hatchetAnchor.x && hatchetAnchor.y) {
@@ -686,7 +686,7 @@ const settingKeys = [
       }
     });
 
-    document.addEventListener('mousedown', (e) => {
+    document.addEventListener('mousedown', e => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
           isHatcheting = true;
@@ -698,7 +698,7 @@ const settingKeys = [
         }
       }
     });
-    document.addEventListener('mouseup', (e) => {
+    document.addEventListener('mouseup', e => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
           isHatcheting = false;
@@ -721,6 +721,7 @@ const settingKeys = [
   }
 
   function initRainbow() {
+    // Color Toggle
     primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
     secondaryActiveColor = primaryActiveColor.cloneNode();
     secondaryActiveColor.classList.add('scsColorPreview');
@@ -729,11 +730,9 @@ const settingKeys = [
     secondaryActiveColor = primaryActiveColor.appendChild(secondaryActiveColor);
     primaryActiveColor.setAttribute('title', 'Color (T)oggle');
     $(primaryActiveColor).tooltip('fixTitle');
+    primaryActiveColor.addEventListener('click', switchColors);
 
-    primaryActiveColor.addEventListener('click', (e) => {
-      switchColors();
-    });
-
+    // Rainbow Tool
     let eraserTool = document.querySelector('[data-tool="erase"]');
     rainbowTool = eraserTool.cloneNode(true);
     rainbowTool.setAttribute('data-tool', 'scsRainbow');
@@ -745,12 +744,13 @@ const settingKeys = [
     rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
     $(rainbowTool.firstChild).tooltip();
 
+    // Rainbow Interval when tool is clicked
     rainbowSpeed = document.getElementById('scsRainbowSpeed');
     let rainbowInterval = 0;
-    rainbowTool.addEventListener('click', (e) => {
+    rainbowTool.addEventListener('click', e => {
       rainbowTool.classList.toggle('scsToolActive');
       if (rainbowTool.classList.contains('scsToolActive')) {
-        rainbowInterval = setInterval(rainbowCycle, rainbowSpeed.value);
+        rainbowInterval = setInterval(rainbowCycleTick, rainbowSpeed.value);
       } else {
         if (rainbowInterval) {
           clearInterval(rainbowInterval);
@@ -759,26 +759,24 @@ const settingKeys = [
       }
     });
 
+    // Rainbow mode select
     let rainbowSelect = document.getElementById('scsRainbowMode');
     rainbowSelect.value = settings.scsRainbowMode ?? '1-cycle';
-
-    rainbowSelect.addEventListener('change', (e) => {
-      settings.scsRainbowMode = e.target.value;
-    });
-    rainbowSpeed.addEventListener('change', (e) => {
+    rainbowSelect.addEventListener('change', e => (settings.scsRainbowMode = e.target.value));
+    rainbowSpeed.addEventListener('change', e => {
       if (rainbowInterval) {
         clearInterval(rainbowInterval);
-        rainbowInterval = setInterval(rainbowCycle, e.target.value);
+        rainbowInterval = setInterval(rainbowCycleTick, e.target.value);
       }
     });
   }
 
   let rainbowIdx = 0;
   const grayCycle = [0, 1, 12, 11];
-  function rainbowCycle() {
+  function rainbowCycleTick() {
     if (settings.scsRainbowMode === '1-color') {
-      let altColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
-      brushColors[altColorIdx >= 11 ? altColorIdx - 11 : altColorIdx + 11].click();
+      let currentColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
+      brushColors[(currentColorIdx + 11) % 22].click();
     } else if (settings.scsRainbowMode === '2-cycle') {
       switchColors();
     } else if (settings.scsRainbowMode === 'Light') {
@@ -790,7 +788,7 @@ const settingKeys = [
     } else if (settings.scsRainbowMode === 'All') {
       brushColors[rainbowIdx % 22].click();
     }
-    rainbowIdx += 1;
+    rainbowIdx = (rainbowIdx + 1) % 22;
   }
 
   function switchColors() {
@@ -800,12 +798,12 @@ const settingKeys = [
   }
 
   function initGameObserver() {
-    let gameObserver = new MutationObserver((mutations) => {
+    let gameObserver = new MutationObserver(mutations => {
       let screenGame = mutations[0].target;
 
       if (screenGame.style.display !== 'none') {
         let visibleDrawer = Array.from(document.querySelectorAll('.drawing')).filter(
-          (div) => div.offsetParent
+          div => div.offsetParent
         )[0];
         if (visibleDrawer) {
           artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
@@ -826,7 +824,7 @@ const settingKeys = [
         if (currentGamemode === 'One shot') {
           chatInput.addEventListener('keyup', oneshot);
 
-          let drawingObserver = new MutationObserver((mutations) => {
+          let drawingObserver = new MutationObserver(mutations => {
             let overlay = mutations[0].target;
             if (overlay.style.display !== 'none') {
               chatInput.disabled = false;
@@ -890,7 +888,7 @@ const settingKeys = [
       attributeFilter: ['style'],
     });
 
-    let currentDrawerObserver = new MutationObserver((mutations) => {
+    let currentDrawerObserver = new MutationObserver(mutations => {
       let drawer = mutations[0].target;
 
       if (drawer.style.display !== 'none') {
@@ -899,9 +897,9 @@ const settingKeys = [
         }, 3000);
       }
     });
-    let playersObserver = new MutationObserver((mutations) => {
+    let playersObserver = new MutationObserver(mutations => {
       if (mutations.length > 1) {
-        document.querySelectorAll('.drawing').forEach((div) => {
+        document.querySelectorAll('.drawing').forEach(div => {
           currentDrawerObserver.observe(div, {
             attributes: true,
             attributeFilter: ['style'],
@@ -919,9 +917,9 @@ const settingKeys = [
       childList: true,
     });
 
-    let chatObserver = new MutationObserver((mutations) => {
-      mutations.forEach((change) => {
-        change.addedNodes.forEach((msg) => {
+    let chatObserver = new MutationObserver(mutations => {
+      mutations.forEach(change => {
+        change.addedNodes.forEach(msg => {
           let sender = msg.firstChild.innerText;
           if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
             msg.remove();
