@@ -282,10 +282,7 @@
     chatModKey,
     chatFocusKey,
     chatInput,
-    containerFreespace,
-    sizeSelection,
     brushSizes,
-    colorSelection,
     brushColors,
     currentGamemode,
     discordTag,
@@ -316,96 +313,6 @@
     primaryActiveColor.addEventListener('click', switchColors);
   }
 
-  function init() {
-    canvas = document.getElementById('canvasGame');
-    solutionText = document.querySelector('#overlay .text');
-    currentWord = document.getElementById('currentWord');
-    timer = document.getElementById('timer');
-    chatInput = document.getElementById('inputChat');
-
-    let panelElem = document.createElement('div');
-    panelElem.classList.add('scsTitleMenu');
-    panelElem.innerHTML = keybindPanel;
-    let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
-    userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
-    let penTooltip = document.querySelector('[data-tool="pen"] > .toolIcon');
-    penTooltip.setAttribute('title', '(B)rush (middle click to pick colors)');
-    $(penTooltip).tooltip('fixTitle');
-
-    containerFreespace = document.getElementById('containerFreespace');
-    containerFreespace.innerHTML = customUI;
-    containerFreespace.style.background = 'none';
-
-    initColorToggle();
-    initChatFocus();
-    initPostImage();
-    initGamemode();
-    initBrushSelect();
-
-    initRainbow();
-    initHatching();
-    initPallet();
-    initChatBlacklist();
-    initGameObserver();
-
-    document.addEventListener('keydown', e => {
-      if (document.activeElement.id !== 'inputChat') {
-        focusChat(e);
-        toggleHotkeys(e);
-        selectBrushSize(e);
-        selectBrushColor(e);
-      }
-    });
-    canvas.addEventListener('mousedown', e => {
-      if (e.button == 1 && !scsElements.hatchingTool.classList.contains('scsToolActive')) {
-        let rect = canvas.getBoundingClientRect();
-        let color = Uint32Array.from(
-          canvas
-            .getContext('2d')
-            .getImageData(
-              Math.floor(((e.clientX - rect.x) / rect.width) * canvas.width),
-              Math.floor(((e.clientY - rect.y) / rect.height) * canvas.height),
-              1,
-              1
-            ).data
-        );
-        let pickIdx = colors.indexOf((color[0] << 16) | (color[1] << 8) | color[2]);
-        if (pickIdx != -1) {
-          brushColors[pickIdx].click();
-        }
-      }
-    });
-  }
-
-  function initChatFocus() {
-    let focusKeybind = document.getElementById('scsChatFocus');
-    let focusKeybind2 = document.getElementById('scsChatFocus2');
-    chatModKey = localStorage.getItem('scsChatFocus');
-    focusKeybind.value = chatModKey ? chatModKey : 'None';
-    chatFocusKey = focusKeybind2.value = localStorage.getItem('scsChatFocus2');
-    focusKeybind.addEventListener('change', e => {
-      settings.scsChatFocus = e.target.value;
-      chatModKey = e.target.value;
-    });
-    focusKeybind2.addEventListener('click', e => {
-      document.addEventListener('keydown', bindKey);
-      setTimeout(() => {
-        document.removeEventListener('keydown', bindKey);
-      }, 10000);
-      function bindKey(e) {
-        if (e.key !== 'Escape') {
-          settings.scsChatFocus2 = e.key;
-          e.target.value = e.key;
-          chatFocusKey = e.key;
-        } else {
-          settings.scsChatFocus2 = '';
-          e.target.value = '';
-          chatFocusKey = '';
-        }
-        document.removeEventListener('keydown', bindKey);
-      }
-    });
-  }
   function focusChat(e) {
     let modKey = true;
     if (chatModKey === 'Shift') {
@@ -421,33 +328,66 @@
     }
   }
 
+  function initChatFocus() {
+    let focusKeybind = document.getElementById('scsChatFocus');
+    chatModKey = settings.scsChatFocus;
+    focusKeybind.value = chatModKey ?? 'None';
+    focusKeybind.addEventListener('change', e => {
+      settings.scsChatFocus = e.target.value;
+      chatModKey = e.target.value;
+    });
+
+    let focusKeybind2 = document.getElementById('scsChatFocus2');
+    chatFocusKey = settings.scsChatFocus2;
+    focusKeybind2.value = chatFocusKey;
+    focusKeybind2.addEventListener('click', e => {
+      function bindKey(e) {
+        if (e.key !== 'Escape') {
+          settings.scsChatFocus2 = e.key;
+          e.target.value = e.key;
+          chatFocusKey = e.key;
+        } else {
+          settings.scsChatFocus2 = '';
+          e.target.value = '';
+          chatFocusKey = '';
+        }
+        document.removeEventListener('keydown', bindKey);
+      }
+
+      document.addEventListener('keydown', bindKey);
+      setTimeout(() => {
+        document.removeEventListener('keydown', bindKey);
+      }, 10000);
+    });
+  }
+
   function initPostImage() {
     let postWrapper = document.getElementById('scsPostWrapper');
-    let $postWrapper = $(postWrapper);
-    discordTag = localStorage.getItem('scsDiscord');
     let scsDiscord = document.getElementById('scsDiscord');
-    if (discordTag) {
-      scsDiscord.value = discordTag;
+    if (settings.scsDiscord) {
+      scsDiscord.value = settings.scsDiscord;
     }
-    if (postWrapper && !discordTag) {
+
+    if (postWrapper && !settings.scsDiscord) {
       postWrapper.setAttribute('title', 'I need your Discord username!');
       postWrapper.classList.add('disabled');
     }
-    $postWrapper.tooltip();
+
+    $(postWrapper).tooltip();
     scsDiscord.addEventListener('change', e => {
       settings.scsDiscord = e.target.value;
-      discordTag = e.target.value;
       if (postWrapper) {
-        if (discordTag) {
+        if (settings.scsDiscord) {
           postWrapper.setAttribute('title', 'Post the current image to D.S.');
           postWrapper.classList.remove('disabled');
         } else {
           postWrapper.setAttribute('title', 'I need your Discord username!');
           postWrapper.classList.add('disabled');
         }
-        $postWrapper.tooltip('fixTitle');
+        $(postWrapper).tooltip('fixTitle');
       }
     });
+
     document.getElementById('scsPostAwesome').addEventListener('click', e => {
       postImage(channels.awesome);
     });
@@ -457,11 +397,14 @@
     document.getElementById('scsPostShame').addEventListener('click', e => {
       postImage(channels.shame);
     });
+
     let debounceTimeout;
     function clearDebounce() {
       clearTimeout(debounceTimeout);
       debounceTimeout = 0;
     }
+
+    // I'm just gonna trust you on this one 😂
     function postImage(channel) {
       let canvasImage = canvas.toDataURL().split(',')[1];
       let wordParsed = solutionText.innerText;
@@ -538,67 +481,48 @@
   function initGamemode() {
     currentGamemode = sessionStorage.getItem('scsGamemode');
     let gamemodeInput = document.getElementById('scsGamemode');
-    gamemodeInput.value = currentGamemode ? currentGamemode : 'None';
+    gamemodeInput.value = currentGamemode ?? 'None';
     gamemodeInput.addEventListener('change', e => {
       sessionStorage.setItem('scsGamemode', e.target.value);
       currentGamemode = e.target.value;
     });
   }
 
-  function toggleHotkeys(e) {
-    if (e.key === 'r') {
-      scsElements.rainbowTool.click();
-    } else if (e.key === 't') {
-      switchColors();
-    } else if (e.key === 'h') {
-      scsElements.hatchingTool.click();
-    } else if (e.key === ' ' && scsElements.hatchingTool.classList.contains('scsToolActive')) {
-      e.preventDefault();
-      e.stopPropagation();
-      Object.assign(hatchetAnchor, { x: null, y: null });
-      scsElements.scsAnchor.style.display = 'none';
-    }
-  }
-
   function initBrushSelect() {
-    colorSelection = localStorage.getItem('scsBrushColor');
     let colorInput = document.getElementById('scsBrushColor');
-    colorInput.value = colorSelection ? colorSelection : 'None';
-    sizeSelection = localStorage.getItem('scsBrushSize');
+    colorInput.value = settings.scsBrushColor ?? 'None';
+
     let sizeInput = document.getElementById('scsBrushSize');
-    sizeInput.value = sizeSelection ? sizeSelection : 'None';
+    sizeInput.value = settings.scsBrushSize ?? 'None';
+
     brushColors = document.querySelectorAll('[data-color]');
     brushSizes = document.querySelectorAll('[data-size]');
 
-    sizeInput.addEventListener('change', e => {
-      settings.scsBrushSize = e.target.value;
-      sizeSelection = e.target.value;
-    });
-    colorInput.addEventListener('change', e => {
-      settings.scsBrushColor = e.target.value;
-      colorSelection = e.target.value;
-    });
+    sizeInput.addEventListener('change', e => (settings.scsBrushSize = e.target.value));
+    colorInput.addEventListener('change', e => (settings.scsBrushColor = e.target.value));
   }
 
   function selectBrushSize(e) {
-    if (!['1', '2', '3', '4'].includes(e.key)) {
+    const brushSizes = ['1', '2', '3', '4'];
+    if (!brushSizes.includes(e.key)) {
       return;
     }
     if (
-      (sizeSelection === '1-4' && e.code.match(/Digit[0-9]/)) ||
-      (sizeSelection === 'Numpad 1-4' && e.code.match(/Numpad[0-9]/))
+      (settings.scsBrushSize === '1-4' && e.code.match(/Digit[0-9]/)) ||
+      (settings.scsBrushSize === 'Numpad 1-4' && e.code.match(/Numpad[0-9]/))
     ) {
       brushSizes[+e.key - 1].click();
     }
   }
 
   function selectBrushColor(e) {
-    if (!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
+    const brushColors = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    if (!brushColors.includes(e.key)) {
       return;
     }
     if (
-      (colorSelection === '0-9' && e.code.match(/Digit[0-9]/)) ||
-      (colorSelection === 'Numpad 0-9' && e.code.match(/Numpad[0-9]/))
+      (settings.scsBrushColor === '0-9' && e.code.match(/Digit[0-9]/)) ||
+      (settings.scsBrushColor === 'Numpad 0-9' && e.code.match(/Numpad[0-9]/))
     ) {
       let targetColor = 11;
       if (e.key === '0') {
@@ -622,43 +546,70 @@
     }
   }
 
-  function initChatBlacklist() {
-    document.addEventListener('click', e => {
-      if (
-        e.target.classList.contains('name') &&
-        e.target.parentElement.parentElement.classList.contains('player')
-      ) {
-        e.stopImmediatePropagation();
-        let name = e.target.innerText;
-        let nameIdx = playerBlacklist.indexOf(name);
-        if (nameIdx == -1) {
-          playerBlacklist.push(name);
-          e.target.parentElement.parentElement.classList.add('scsMute');
-        } else {
-          playerBlacklist.splice(nameIdx, 1);
-          e.target.parentElement.parentElement.classList.remove('scsMute');
-        }
+  function initRainbow() {
+    let rainbowIdx = 0;
+    const grayCycle = [0, 1, 12, 11];
+    function rainbowCycleTick() {
+      if (settings.scsRainbowMode === '1-color') {
+        let currentColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
+        brushColors[(currentColorIdx + 11) % 22].click();
+      } else if (settings.scsRainbowMode === '2-cycle') {
+        switchColors();
+      } else if (settings.scsRainbowMode === 'Light') {
+        brushColors[(rainbowIdx % 7) + 2].click();
+      } else if (settings.scsRainbowMode === 'Dark') {
+        brushColors[(rainbowIdx % 7) + 13].click();
+      } else if (settings.scsRainbowMode === 'Gray') {
+        brushColors[grayCycle[rainbowIdx % 4]].click();
+      } else if (settings.scsRainbowMode === 'All') {
+        brushColors[rainbowIdx % 22].click();
       }
-    });
-  }
-
-  function initPallet() {
-    let palletInput = document.getElementById('scsPallet');
-    if (settings.scsPallet) {
-      palletInput.value = settings.scsPallet;
+      rainbowIdx = (rainbowIdx + 1) % 22;
     }
 
-    let palletCheckedInput = document.getElementById('scsPalletChecked');
-    palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
-    palletInput.addEventListener('change', e => {
-      let prettyPallet = JSON.stringify(JSON.parse(e.target.value));
-      settings.scsPallet = prettyPallet;
-    });
-    palletCheckedInput.addEventListener('change', e => {
-      settings.scsPalletChecked = e.target.checked;
-    });
+    // Rainbow Tool
+    let eraserTool = document.querySelector('[data-tool="erase"]');
+    let rainbowTool = eraserTool.cloneNode(true);
+    rainbowTool.setAttribute('data-tool', 'scsRainbow');
+    rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
+    rainbowTool.firstChild.setAttribute(
+      'src',
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif'
+    );
+    rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
+    $(rainbowTool.firstChild).tooltip();
 
-    scsElements.palletCheckedInput = palletCheckedInput;
+    // Rainbow Interval when tool is clicked
+    let rainbowInterval;
+    rainbowTool.addEventListener('click', e => {
+      rainbowTool.classList.toggle('scsToolActive');
+      if (rainbowTool.classList.contains('scsToolActive')) {
+        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
+      } else if (rainbowInterval) {
+        clearInterval(rainbowInterval);
+        rainbowInterval = null;
+      }
+    });
+    scsElements.rainbowTool = rainbowTool;
+
+    // Rainbow mode select
+    let rainbowSelect = document.getElementById('scsRainbowMode');
+    rainbowSelect.value = settings.scsRainbowMode ?? '1-cycle';
+    rainbowSelect.addEventListener('change', e => (settings.scsRainbowMode = e.target.value));
+
+    // Rainbow interval input
+    let rainbowSpeedInput = document.getElementById('scsRainbowSpeed');
+    settings.scsRainbowSpeed = parseInt(settings.scsRainbowSpeed) || 50;
+    rainbowSpeedInput.value = settings.scsRainbowSpeed;
+    rainbowSpeedInput.addEventListener('change', e => (settings.scsRainbowSpeed = e.target.value));
+    rainbowSpeedInput.addEventListener('change', e => {
+      settings.scsRainbowSpeed = parseInt(e.target.value);
+      if (rainbowInterval) {
+        clearInterval(rainbowInterval);
+        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
+      }
+    });
+    scsElements.rainbowSpeed = rainbowSpeedInput;
   }
 
   function hatchCycle() {
@@ -745,71 +696,46 @@
 
     scsElements.hatchingTool = hatchingTool;
   }
-
-  function initRainbow() {
-    let rainbowIdx = 0;
-    const grayCycle = [0, 1, 12, 11];
-    function rainbowCycleTick() {
-      if (settings.scsRainbowMode === '1-color') {
-        let currentColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
-        brushColors[(currentColorIdx + 11) % 22].click();
-      } else if (settings.scsRainbowMode === '2-cycle') {
-        switchColors();
-      } else if (settings.scsRainbowMode === 'Light') {
-        brushColors[(rainbowIdx % 7) + 2].click();
-      } else if (settings.scsRainbowMode === 'Dark') {
-        brushColors[(rainbowIdx % 7) + 13].click();
-      } else if (settings.scsRainbowMode === 'Gray') {
-        brushColors[grayCycle[rainbowIdx % 4]].click();
-      } else if (settings.scsRainbowMode === 'All') {
-        brushColors[rainbowIdx % 22].click();
-      }
-      rainbowIdx = (rainbowIdx + 1) % 22;
+  
+  function initPallet() {
+    let palletInput = document.getElementById('scsPallet');
+    if (settings.scsPallet) {
+      palletInput.value = settings.scsPallet;
     }
 
-    // Rainbow Tool
-    let eraserTool = document.querySelector('[data-tool="erase"]');
-    let rainbowTool = eraserTool.cloneNode(true);
-    rainbowTool.setAttribute('data-tool', 'scsRainbow');
-    rainbowTool.firstChild.setAttribute('title', 'Magic b(R)ush');
-    rainbowTool.firstChild.setAttribute(
-      'src',
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/brush.gif'
-    );
-    rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
-    $(rainbowTool.firstChild).tooltip();
+    let palletCheckedInput = document.getElementById('scsPalletChecked');
+    palletCheckedInput.checked = localStorage.getItem('scsPalletChecked') === 'true';
+    palletInput.addEventListener('change', e => {
+      let prettyPallet = JSON.stringify(JSON.parse(e.target.value));
+      settings.scsPallet = prettyPallet;
+    });
+    palletCheckedInput.addEventListener('change', e => {
+      settings.scsPalletChecked = e.target.checked;
+    });
 
-    // Rainbow Interval when tool is clicked
-    let rainbowInterval;
-    rainbowTool.addEventListener('click', e => {
-      rainbowTool.classList.toggle('scsToolActive');
-      if (rainbowTool.classList.contains('scsToolActive')) {
-        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
-      } else if (rainbowInterval) {
-        clearInterval(rainbowInterval);
-        rainbowInterval = null;
+    scsElements.palletCheckedInput = palletCheckedInput;
+  }
+
+  function initChatBlacklist() {
+    // TODO: Change t.target.parentElement.parentElement with static reference
+    document.addEventListener('click', e => {
+      if (
+        e.target.classList.contains('name') &&
+        e.target.parentElement.parentElement.classList.contains('player')
+      ) {
+        // TODO: Hide current chat messages by that player
+        e.stopImmediatePropagation();
+        let name = e.target.innerText;
+        let nameIdx = playerBlacklist.indexOf(name);
+        if (nameIdx == -1) {
+          playerBlacklist.push(name);
+          e.target.parentElement.parentElement.classList.add('scsMute');
+        } else {
+          playerBlacklist.splice(nameIdx, 1);
+          e.target.parentElement.parentElement.classList.remove('scsMute');
+        }
       }
     });
-    scsElements.rainbowTool = rainbowTool;
-
-    // Rainbow mode select
-    let rainbowSelect = document.getElementById('scsRainbowMode');
-    rainbowSelect.value = settings.scsRainbowMode ?? '1-cycle';
-    rainbowSelect.addEventListener('change', e => (settings.scsRainbowMode = e.target.value));
-
-    // Rainbow interval input
-    let rainbowSpeedInput = document.getElementById('scsRainbowSpeed');
-    settings.scsRainbowSpeed = parseInt(settings.scsRainbowSpeed) || 50;
-    rainbowSpeedInput.value = settings.scsRainbowSpeed;
-    rainbowSpeedInput.addEventListener('change', e => (settings.scsRainbowSpeed = e.target.value));
-    rainbowSpeedInput.addEventListener('change', e => {
-      settings.scsRainbowSpeed = parseInt(e.target.value);
-      if (rainbowInterval) {
-        clearInterval(rainbowInterval);
-        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
-      }
-    });
-    scsElements.rainbowSpeed = rainbowSpeedInput;
   }
 
   function initGameObserver() {
@@ -817,9 +743,10 @@
       let screenGame = mutations[0].target;
 
       if (screenGame.style.display !== 'none') {
-        let visibleDrawer = Array.from(document.querySelectorAll('.drawing')).filter(
+        let visibleDrawer = Array.from(document.querySelectorAll('.drawing')).find(
           div => div.offsetParent
-        )[0];
+        );
+
         if (visibleDrawer) {
           artist = visibleDrawer.closest('.player').querySelector('.name').innerHTML;
         }
@@ -829,6 +756,7 @@
         } else {
           canvas.style.opacity = 1;
         }
+
         if (currentGamemode === 'Deaf') {
           document.getElementsByClassName('containerGame')[0].classList.add('scsDeaf');
           currentWord.style.opacity = 0;
@@ -836,7 +764,15 @@
           document.getElementsByClassName('containerGame')[0].classList.remove('scsDeaf');
           currentWord.style.opacity = 1;
         }
+
         if (currentGamemode === 'One shot') {
+          function oneshot(e) {
+            if (e.key === 'Enter') {
+              chatInput.disabled = true;
+              chatInput.removeEventListener('keyup', oneshot);
+            }
+          }
+
           chatInput.addEventListener('keyup', oneshot);
 
           let drawingObserver = new MutationObserver(mutations => {
@@ -852,22 +788,16 @@
             attributes: true,
             attributeFilter: ['style'],
           });
-
-          function oneshot(e) {
-            if (e.key === 'Enter') {
-              chatInput.disabled = true;
-              chatInput.removeEventListener('keyup', oneshot);
-            }
-          }
         }
 
         if (settings.scsPallet && scsElements.palletCheckedInput.checked) {
           const pallet = JSON.parse(settings.scsPallet);
           if (pallet && pallet.colors) {
-            pallet.colors.forEach(({color, index}) => {
+            pallet.colors.forEach(({ color, index }) => {
               if (Number.isSafeInteger(index)) {
                 if ((index > 0 && index < 11) || (index > 11 && index < 22)) {
-                  if (/^#([0-9a-f]{3}){1,2}$/i.test(color)) { // Test for Hex
+                  if (/^#([0-9a-f]{3}){1,2}$/i.test(color)) {
+                    // Test for Hex
                     let t = color.length == 7;
                     brushColors[index].style.backgroundColor = color;
                     colors[index] = parseInt(color.slice(1), 16);
@@ -877,7 +807,8 @@
                       parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10) +
                       parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10) +
                       ')';
-                  } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) { // Test for RGB
+                  } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) {
+                    // Test for RGB
                     colorsRGB[index] = color;
                     let components = color.slice(4, color.length - 1).split(', ');
                     components.forEach((w, j, b) => {
@@ -938,13 +869,93 @@
         change.addedNodes.forEach(msg => {
           let sender = msg.firstChild.innerText;
           if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
+            // TODO: Maybe not remove the message but hide it. So it can show up if we unmute
             msg.remove();
           }
         });
       });
     });
+
     chatObserver.observe(document.getElementById('boxMessages'), {
       childList: true,
+    });
+  }
+  
+  function toggleHotkeys(e) {
+    if (e.key === 'r') {
+      scsElements.rainbowTool.click();
+    } else if (e.key === 't') {
+      switchColors();
+    } else if (e.key === 'h') {
+      scsElements.hatchingTool.click();
+    } else if (e.key === ' ' && scsElements.hatchingTool.classList.contains('scsToolActive')) { 
+      e.preventDefault();
+      e.stopPropagation();
+      Object.assign(hatchetAnchor, { x: null, y: null });
+      scsElements.scsAnchor.style.display = 'none';
+    }
+  }
+
+
+  function init() {
+    canvas = document.getElementById('canvasGame');
+    solutionText = document.querySelector('#overlay .text');
+    currentWord = document.getElementById('currentWord');
+    timer = document.getElementById('timer');
+    chatInput = document.getElementById('inputChat');
+
+    let panelElem = document.createElement('div');
+    panelElem.classList.add('scsTitleMenu');
+    panelElem.innerHTML = keybindPanel;
+    let userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
+    userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
+    let penTooltip = document.querySelector('[data-tool="pen"] > .toolIcon');
+    penTooltip.setAttribute('title', '(B)rush (middle click to pick colors)');
+    $(penTooltip).tooltip('fixTitle');
+
+    let containerFreespace = document.getElementById('containerFreespace');
+    containerFreespace.innerHTML = customUI;
+    containerFreespace.style.background = 'none';
+
+    initColorToggle();
+    initChatFocus();
+    initPostImage();
+    initGamemode();
+    initBrushSelect();
+
+    initRainbow();
+    initHatching();
+    initPallet();
+    initChatBlacklist();
+    initGameObserver();
+
+    document.addEventListener('keydown', e => {
+      if (document.activeElement.id !== 'inputChat') {
+        focusChat(e);
+        toggleHotkeys(e);
+        selectBrushSize(e);
+        selectBrushColor(e);
+      }
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      if (e.button == 1 && !scsElements.hatchingTool.classList.contains('scsToolActive')) {
+        let rect = canvas.getBoundingClientRect();
+        let color = Uint32Array.from(
+          canvas
+            .getContext('2d')
+            .getImageData(
+              Math.floor(((e.clientX - rect.x) / rect.width) * canvas.width),
+              Math.floor(((e.clientY - rect.y) / rect.height) * canvas.height),
+              1,
+              1
+            ).data
+        );
+        let pickIdx = colors.indexOf((color[0] << 16) | (color[1] << 8) | color[2]);
+        if (pickIdx != -1) {
+          brushColors[pickIdx].click();
+        }
+      }
     });
   }
 
