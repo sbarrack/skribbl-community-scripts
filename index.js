@@ -291,7 +291,7 @@
     discordTag,
     artist;
 
-  const domElements = {};
+  const scsElements = {};
   let primaryActiveColor, secondaryActiveColor;
   let isHatcheting;
 
@@ -357,7 +357,7 @@
       }
     });
     canvas.addEventListener('mousedown', e => {
-      if (e.button == 1 && !domElements.hatchingTool.classList.contains('scsToolActive')) {
+      if (e.button == 1 && !scsElements.hatchingTool.classList.contains('scsToolActive')) {
         let rect = canvas.getBoundingClientRect();
         let color = Uint32Array.from(
           canvas
@@ -547,16 +547,16 @@
 
   function toggleHotkeys(e) {
     if (e.key === 'r') {
-      domElements.rainbowTool.click();
+      scsElements.rainbowTool.click();
     } else if (e.key === 't') {
       switchColors();
     } else if (e.key === 'h') {
-      domElements.hatchingTool.click();
-    } else if (e.key === ' ' && domElements.hatchingTool.classList.contains('scsToolActive')) {
+      scsElements.hatchingTool.click();
+    } else if (e.key === ' ' && scsElements.hatchingTool.classList.contains('scsToolActive')) {
       e.preventDefault();
       e.stopPropagation();
       Object.assign(hatchetAnchor, { x: null, y: null });
-      domElements.scsAnchor.style.display = 'none';
+      scsElements.scsAnchor.style.display = 'none';
     }
   }
 
@@ -658,7 +658,7 @@
       settings.scsPalletChecked = e.target.checked;
     });
 
-    domElements.palletCheckedInput = palletCheckedInput;
+    scsElements.palletCheckedInput = palletCheckedInput;
   }
 
   function hatchCycle() {
@@ -685,7 +685,7 @@
       'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
     document.body.appendChild(scsAnchor);
 
-    domElements.scsAnchor = scsAnchor;
+    scsElements.scsAnchor = scsAnchor;
 
     // Make the tool
     let eraserTool = document.querySelector('[data-tool="erase"]');
@@ -710,7 +710,7 @@
         if (hatchetAnchor.x && hatchetAnchor.y) {
           scsAnchor.style.display = 'block';
         }
-        hatchInterval = setInterval(hatchCycle, domElements.rainbowSpeed.value);
+        hatchInterval = setInterval(hatchCycle, scsElements.rainbowSpeed.value);
       } else {
         scsAnchor.style.display = 'none';
         if (hatchInterval) {
@@ -743,7 +743,7 @@
       }
     });
 
-    domElements.hatchingTool = hatchingTool;
+    scsElements.hatchingTool = hatchingTool;
   }
 
   function initRainbow() {
@@ -790,7 +790,7 @@
         rainbowInterval = null;
       }
     });
-    domElements.rainbowTool = rainbowTool;
+    scsElements.rainbowTool = rainbowTool;
 
     // Rainbow mode select
     let rainbowSelect = document.getElementById('scsRainbowMode');
@@ -809,7 +809,7 @@
         rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
       }
     });
-    domElements.rainbowSpeed = rainbowSpeedInput;
+    scsElements.rainbowSpeed = rainbowSpeedInput;
   }
 
   function initGameObserver() {
@@ -861,7 +861,7 @@
           }
         }
 
-        if (settings.scsPallet && domElements.palletCheckedInput.checked) {
+        if (settings.scsPallet && scsElements.palletCheckedInput.checked) {
           const pallet = JSON.parse(settings.scsPallet);
           if (pallet && pallet.colors) {
             pallet.colors.forEach(({color, index}) => {
