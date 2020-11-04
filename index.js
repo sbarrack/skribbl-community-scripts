@@ -294,7 +294,6 @@
   const domElements = {};
   let primaryActiveColor, secondaryActiveColor;
   let isHatcheting;
-  let scsAnchor;
   let pallet, palletCheckedInput;
 
   if (document.readyState === 'complete') {
@@ -564,7 +563,7 @@
       e.preventDefault();
       e.stopPropagation();
       Object.assign(hatchetAnchor, { x: null, y: null });
-      scsAnchor.style.display = 'none';
+      domElements.scsAnchor.style.display = 'none';
     }
   }
 
@@ -684,6 +683,19 @@
   }
 
   function initHatching() {
+    // Make the anchor image
+    let scsAnchor = document.createElement('img');
+    scsAnchor.id = 'scsAnchor';
+    scsAnchor.style.display = 'none';
+    scsAnchor.style.position = 'absolute';
+    scsAnchor.style.pointerEvents = 'none';
+    scsAnchor.src =
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+    document.body.appendChild(scsAnchor);
+
+    domElements.scsAnchor = scsAnchor;
+
+    // Make the tool
     let eraserTool = document.querySelector('[data-tool="erase"]');
     let hatchingTool = eraserTool.cloneNode(true);
     hatchingTool.setAttribute('data-tool', 'scsHatching');
@@ -698,6 +710,7 @@
     hatchingTool = eraserTool.parentNode.insertBefore(hatchingTool, eraserTool);
     $(hatchingTool.firstChild).tooltip();
     
+    // Onclick logic
     let hatchInterval = 0;
     hatchingTool.addEventListener('click', e => {
       hatchingTool.classList.toggle('scsToolActive');
@@ -715,6 +728,7 @@
       }
     });
 
+    // Hatchet functionality
     document.addEventListener('mousedown', e => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
@@ -738,15 +752,6 @@
     });
 
     domElements.hatchingTool = hatchingTool;
-
-    scsAnchor = document.createElement('img');
-    scsAnchor.id = 'scsAnchor';
-    scsAnchor.style.display = 'none';
-    scsAnchor.style.position = 'absolute';
-    scsAnchor.style.pointerEvents = 'none';
-    scsAnchor.src =
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
-    document.body.appendChild(scsAnchor);
   }
 
   function initRainbow() {
