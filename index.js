@@ -12,9 +12,10 @@
 // ==/UserScript==
 'use strict';
 
-// #region Consts
+(function ($) {
+  // #region Consts
 
-const keybindPanel = `
+  const keybindPanel = `
 <h4>Don't Spell</h4>
 <div>
     <label for="scsDiscord">Username:</label>
@@ -91,7 +92,7 @@ const keybindPanel = `
     }
 </style>
 `;
-const customUI = `<div id="scsCustomUi">
+  const customUI = `<div id="scsCustomUi">
 <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
     <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
         Awesome Drawings
@@ -177,88 +178,89 @@ const customUI = `<div id="scsCustomUi">
     }
 </style>
 </div>`;
-const channels = Object.freeze({
-  awesome: {
-    url:
-      'https://discordapp.com/api/webhooks/752344316965421176/9mhUnpdXj-nmjB_L93yOeA3ZwQUD6vanFU1kMQkNJ96VVNCL0arhvz1gCvIm3ycifCOv',
-    name: 'Awesome Drawing',
-  },
-  guess: {
-    url:
-      'https://discordapp.com/api/webhooks/752343877247303761/fiIApqzoCfjVOQmLHBQmtSTDtZZvcibIoriIVZ5BXo5y5tq1fIR7K3OY1hlxyn70QklN',
-    name: 'Guess this Special Drawing',
-  },
-  shame: {
-    url:
-      'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
-    name: 'Public Shaming',
-  },
-});
-const colors = [
-  0xffffff,
-  0xc1c1c1,
-  0xef130b,
-  0xff7100,
-  0xffe400,
-  0x00cc00,
-  0x00b2ff,
-  0x231fd3,
-  0xa300ba,
-  0xd37caa,
-  0xa0522d,
-  0x000000,
-  0x4c4c4c,
-  0x740b07,
-  0xc23800,
-  0xe8a200,
-  0x005510,
-  0x00569e,
-  0x0e0865,
-  0x550069,
-  0xa75574,
-  0x63300d,
-];
-const colorsRGB = [
-  'rgb(255, 255, 255)',
-  'rgb(193, 193, 193)',
-  'rgb(239, 19, 11)',
-  'rgb(255, 113, 0)',
-  'rgb(255, 228, 0)',
-  'rgb(0, 204, 0)',
-  'rgb(0, 178, 255)',
-  'rgb(35, 31, 211)',
-  'rgb(163, 0, 186)',
-  'rgb(211, 124, 170)',
-  'rgb(160, 82, 45)',
-  'rgb(0, 0, 0)',
-  'rgb(76, 76, 76)',
-  'rgb(116, 11, 7)',
-  'rgb(194, 56, 0)',
-  'rgb(232, 162, 0)',
-  'rgb(0, 85, 16)',
-  'rgb(0, 86, 158)',
-  'rgb(14, 8, 101)',
-  'rgb(85, 0, 105)',
-  'rgb(167, 85, 116)',
-  'rgb(99, 48, 13)',
-];
-const settingKeys = [
-  'scsChatFocus',
-  'scsChatFocus2',
-  'scsChatFocus2',
-  'scsDiscord',
-  'scsGamemode',
-  'scsBrushSize',
-  'scsBrushColor',
-  'scsPallet',
-  'scsPalletChecked',
-  'scsRainbowMode',
-];
-// #endregion
+  const channels = Object.freeze({
+    awesome: {
+      url:
+        'https://discordapp.com/api/webhooks/752344316965421176/9mhUnpdXj-nmjB_L93yOeA3ZwQUD6vanFU1kMQkNJ96VVNCL0arhvz1gCvIm3ycifCOv',
+      name: 'Awesome Drawing',
+    },
+    guess: {
+      url:
+        'https://discordapp.com/api/webhooks/752343877247303761/fiIApqzoCfjVOQmLHBQmtSTDtZZvcibIoriIVZ5BXo5y5tq1fIR7K3OY1hlxyn70QklN',
+      name: 'Guess this Special Drawing',
+    },
+    shame: {
+      url:
+        'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
+      name: 'Public Shaming',
+    },
+  });
+  const colors = [
+    0xffffff,
+    0xc1c1c1,
+    0xef130b,
+    0xff7100,
+    0xffe400,
+    0x00cc00,
+    0x00b2ff,
+    0x231fd3,
+    0xa300ba,
+    0xd37caa,
+    0xa0522d,
+    0x000000,
+    0x4c4c4c,
+    0x740b07,
+    0xc23800,
+    0xe8a200,
+    0x005510,
+    0x00569e,
+    0x0e0865,
+    0x550069,
+    0xa75574,
+    0x63300d,
+  ];
+  const colorsRGB = [
+    'rgb(255, 255, 255)',
+    'rgb(193, 193, 193)',
+    'rgb(239, 19, 11)',
+    'rgb(255, 113, 0)',
+    'rgb(255, 228, 0)',
+    'rgb(0, 204, 0)',
+    'rgb(0, 178, 255)',
+    'rgb(35, 31, 211)',
+    'rgb(163, 0, 186)',
+    'rgb(211, 124, 170)',
+    'rgb(160, 82, 45)',
+    'rgb(0, 0, 0)',
+    'rgb(76, 76, 76)',
+    'rgb(116, 11, 7)',
+    'rgb(194, 56, 0)',
+    'rgb(232, 162, 0)',
+    'rgb(0, 85, 16)',
+    'rgb(0, 86, 158)',
+    'rgb(14, 8, 101)',
+    'rgb(85, 0, 105)',
+    'rgb(167, 85, 116)',
+    'rgb(99, 48, 13)',
+  ];
+  const settingKeys = [
+    'scsChatFocus',
+    'scsChatFocus2',
+    'scsChatFocus2',
+    'scsDiscord',
+    'scsGamemode',
+    'scsBrushSize',
+    'scsBrushColor',
+    'scsPallet',
+    'scsPalletChecked',
+    'scsRainbowMode',
+    'scsRainbowSpeed',
+  ];
+  // #endregion
 
-(function ($) {
   // Settings
   const settings = {};
+  window.scsSettings = settings; // TODO: Remove
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
     settingKeys.forEach(key => {
@@ -721,6 +723,33 @@ const settingKeys = [
   }
 
   function initRainbow() {
+    let rainbowIdx = 0;
+    const grayCycle = [0, 1, 12, 11];
+    function rainbowCycleTick() {
+      if (settings.scsRainbowMode === '1-color') {
+        let currentColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
+        brushColors[(currentColorIdx + 11) % 22].click();
+      } else if (settings.scsRainbowMode === '2-cycle') {
+        switchColors();
+      } else if (settings.scsRainbowMode === 'Light') {
+        brushColors[(rainbowIdx % 7) + 2].click();
+      } else if (settings.scsRainbowMode === 'Dark') {
+        brushColors[(rainbowIdx % 7) + 13].click();
+      } else if (settings.scsRainbowMode === 'Gray') {
+        brushColors[grayCycle[rainbowIdx % 4]].click();
+      } else if (settings.scsRainbowMode === 'All') {
+        brushColors[rainbowIdx % 22].click();
+      }
+      rainbowIdx = (rainbowIdx + 1) % 22;
+    }
+
+    
+    function switchColors() {
+      let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
+      secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
+      brushColors[secondaryColorIdx].click();
+    }
+
     // Color Toggle
     primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
     secondaryActiveColor = primaryActiveColor.cloneNode();
@@ -744,57 +773,35 @@ const settingKeys = [
     rainbowTool = eraserTool.parentNode.insertBefore(rainbowTool, eraserTool);
     $(rainbowTool.firstChild).tooltip();
 
-    // Rainbow Interval when tool is clicked
-    rainbowSpeed = document.getElementById('scsRainbowSpeed');
-    let rainbowInterval = 0;
-    rainbowTool.addEventListener('click', e => {
-      rainbowTool.classList.toggle('scsToolActive');
-      if (rainbowTool.classList.contains('scsToolActive')) {
-        rainbowInterval = setInterval(rainbowCycleTick, rainbowSpeed.value);
-      } else {
-        if (rainbowInterval) {
-          clearInterval(rainbowInterval);
-          rainbowInterval = 0;
-        }
-      }
-    });
-
     // Rainbow mode select
     let rainbowSelect = document.getElementById('scsRainbowMode');
     rainbowSelect.value = settings.scsRainbowMode ?? '1-cycle';
     rainbowSelect.addEventListener('change', e => (settings.scsRainbowMode = e.target.value));
-    rainbowSpeed.addEventListener('change', e => {
+
+    // Rainbow interval input
+    let rainbowSpeedInput = document.getElementById('scsRainbowSpeed');
+    settings.scsRainbowSpeed = parseInt(settings.scsRainbowSpeed) || 50;
+    rainbowSpeedInput.value = settings.scsRainbowSpeed;
+    rainbowSpeedInput.addEventListener('change', e => (settings.scsRainbowSpeed = e.target.value));
+    rainbowSpeedInput.addEventListener('change', e => {
+      settings.scsRainbowSpeed = parseInt(e.target.value);
       if (rainbowInterval) {
         clearInterval(rainbowInterval);
-        rainbowInterval = setInterval(rainbowCycleTick, e.target.value);
+        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
       }
     });
-  }
 
-  let rainbowIdx = 0;
-  const grayCycle = [0, 1, 12, 11];
-  function rainbowCycleTick() {
-    if (settings.scsRainbowMode === '1-color') {
-      let currentColorIdx = colorsRGB.indexOf(primaryActiveColor.style.backgroundColor);
-      brushColors[(currentColorIdx + 11) % 22].click();
-    } else if (settings.scsRainbowMode === '2-cycle') {
-      switchColors();
-    } else if (settings.scsRainbowMode === 'Light') {
-      brushColors[(rainbowIdx % 7) + 2].click();
-    } else if (settings.scsRainbowMode === 'Dark') {
-      brushColors[(rainbowIdx % 7) + 13].click();
-    } else if (settings.scsRainbowMode === 'Gray') {
-      brushColors[grayCycle[rainbowIdx % 4]].click();
-    } else if (settings.scsRainbowMode === 'All') {
-      brushColors[rainbowIdx % 22].click();
-    }
-    rainbowIdx = (rainbowIdx + 1) % 22;
-  }
-
-  function switchColors() {
-    let secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
-    secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
-    brushColors[secondaryColorIdx].click();
+    // Rainbow Interval when tool is clicked
+    let rainbowInterval;
+    rainbowTool.addEventListener('click', e => {
+      rainbowTool.classList.toggle('scsToolActive');
+      if (rainbowTool.classList.contains('scsToolActive')) {
+        rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
+      } else if (rainbowInterval) {
+        clearInterval(rainbowInterval);
+        rainbowInterval = null;
+      }
+    });
   }
 
   function initGameObserver() {
