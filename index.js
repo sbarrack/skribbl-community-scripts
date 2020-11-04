@@ -502,8 +502,8 @@
   }
 
   function selectBrushSize(e) {
-    const brushSizes = ['1', '2', '3', '4'];
-    if (!brushSizes.includes(e.key)) {
+    const brushSizeOptions = ['1', '2', '3', '4'];
+    if (!brushSizeOptions.includes(e.key)) {
       return;
     }
     if (
@@ -515,10 +515,11 @@
   }
 
   function selectBrushColor(e) {
-    const brushColors = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    if (!brushColors.includes(e.key)) {
+    const brushColorOptions = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    if (!brushColorOptions.includes(e.key)) {
       return;
     }
+
     if (
       (settings.scsBrushColor === '0-9' && e.code.match(/Digit[0-9]/)) ||
       (settings.scsBrushColor === 'Numpad 0-9' && e.code.match(/Numpad[0-9]/))
