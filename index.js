@@ -263,7 +263,9 @@
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
     settingKeys.forEach(key => {
-      if (settings[key] !== undefined) {
+      if (!settings[key] || settings[key] === 'null') {
+        localStorage.removeItem(key);
+      } else {
         localStorage.setItem(key, settings[key]);
       }
     });
