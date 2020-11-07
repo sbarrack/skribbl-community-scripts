@@ -14,7 +14,6 @@
 
 (function ($) {
   // #region Consts
-
   const keybindPanel = `
 <h4>Don't Spell</h4>
 <div>
@@ -176,6 +175,9 @@
     .scsDeaf #boxMessages {
         opacity: 0;
     }
+    [scsMuteSender] {
+      display: none;
+    }
 </style>
 </div>`;
   const channels = Object.freeze({
@@ -258,7 +260,6 @@
   ];
   // #endregion
 
-  // Settings
   const settings = {};
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
@@ -293,11 +294,12 @@
   function switchColors() {
     const secondaryColorIdx = colorsRGB.indexOf(secondaryActiveColor.style.backgroundColor);
     secondaryActiveColor.style.backgroundColor = primaryActiveColor.style.backgroundColor;
-    brushColors[secondaryColorIdx].click();
+    if (secondaryColorIdx != -1) {
+      brushColors[secondaryColorIdx].click();
+    }
   }
 
   function initColorToggle() {
-    // Color Toggle
     primaryActiveColor = document.getElementsByClassName('colorPreview')[0];
 
     secondaryActiveColor = primaryActiveColor.cloneNode();
@@ -312,7 +314,6 @@
   }
 
   function focusChat(e) {
-    // TODO: modKey is always truthy?
     let modKey = true;
     if (chatModKey === 'Shift') {
       modKey = e.shiftKey;
@@ -403,7 +404,6 @@
       debounceTimeout = 0;
     }
 
-    // I'm just gonna trust you on this one 😂
     function postImage(channel) {
       const canvasImage = canvas.toDataURL().split(',')[1];
       let wordParsed = solutionText.innerText;
@@ -566,8 +566,7 @@
     scsAnchor.style.display = 'none';
     scsAnchor.style.position = 'absolute';
     scsAnchor.style.pointerEvents = 'none';
-    scsAnchor.src =
-      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+    scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
     document.body.appendChild(scsAnchor);
 
     scsElements.scsAnchor = scsAnchor;
@@ -729,22 +728,29 @@
   }
 
   function initChatBlacklist() {
-    // TODO: Change t.target.parentElement.parentElement with static reference
+    // TODO: Change t.target.parentElement.parentElement with static reference (same in chat observer)
     document.addEventListener('click', e => {
       if (
         e.target.classList.contains('name') &&
         e.target.parentElement.parentElement.classList.contains('player')
       ) {
-        // TODO: Hide current chat messages by that player
         e.stopImmediatePropagation();
         const name = e.target.innerText;
         const nameIdx = playerBlacklist.indexOf(name);
         if (nameIdx == -1) {
           playerBlacklist.push(name);
           e.target.parentElement.parentElement.classList.add('scsMute');
+          Array.from(document.querySelectorAll('#boxMessages > p > b')).forEach((v, i, a) => {
+            if (v.innerText.endsWith(': ') && v.innerText.slice(0, -2) === name) {
+              v.parentElement.setAttribute('scsMuteSender', name);
+            }
+          });
         } else {
           playerBlacklist.splice(nameIdx, 1);
           e.target.parentElement.parentElement.classList.remove('scsMute');
+          Array.from(document.querySelectorAll(`[scsMuteSender=${name}]`)).forEach((v, i, a) => {
+            v.removeAttribute('scsMuteSender');
+          });
         }
       }
     });
@@ -813,12 +819,11 @@
                     const t = color.length == 7;
                     brushColors[index].style.backgroundColor = color;
                     colors[index] = parseInt(color.slice(1), 16);
-                    colorsRGB[index] =
-                      'rgb(' +
-                      parseInt(color.slice(1, t ? 3 : 2), 16).toString(10) +
-                      parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10) +
-                      parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10) +
-                      ')';
+                    colorsRGB[index] = 'rgb(' + [
+                      parseInt(color.slice(1, t ? 3 : 2), 16).toString(10),
+                      parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10),
+                      parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10)
+                    ].join(', ') + ')';
                   } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) {
                     // Test for RGB
                     colorsRGB[index] = color;
@@ -880,9 +885,9 @@
       mutations.forEach(change => {
         change.addedNodes.forEach(msg => {
           const sender = msg.firstChild.innerText;
-          if (sender.endsWith(': ') && playerBlacklist.includes(sender.slice(0, -2))) {
-            // TODO: Maybe not remove the message but hide it. So it can show up if we unmute
-            msg.remove();
+          const senderParsed = sender.slice(0, -2);
+          if (sender.endsWith(': ') && playerBlacklist.includes(senderParsed)) {
+            msg.setAttribute('scsMuteSender', senderParsed);
           }
         });
       });
