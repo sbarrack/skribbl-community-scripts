@@ -14,170 +14,178 @@
 
 (function ($) {
   // #region Consts
+  const developers = Object.freeze(['S', 'Jess 🎷']);
   const keybindPanel = `
 <h4>Don't Spell</h4>
 <div>
-    <label for="scsDiscord">Username:</label>
-    <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
+  <label for="scsDiscord">Username:</label>
+  <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
 </div>
 <div>
-    <label for="scsGamemode">Gamemode:</label>
-    <select class="form-control" id="scsGamemode">
-        <option>None</option>
-        <option>Blind</option>
-        <option>Deaf</option>
-        <option>One shot</option>
-    </select>
+  <label for="scsGamemode">Gamemode:</label>
+  <select class="form-control" id="scsGamemode">
+    <option>None</option>
+    <option>Blind</option>
+    <option>Deaf</option>
+    <option>One shot</option>
+  </select>
 </div>
 <div style="display: inline !important;">
-    <div style="margin-bottom: 5px; display: flex; align-items: center;">
-        <label for="scsPalletChecked">Color pallet:</label>
-        <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
-    </div>
-    <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #rrggbb, #rgb, or rgb(rrr, ggg, bbb))..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
+  <div style="margin-bottom: 5px; display: flex; align-items: center;">
+    <label for="scsPalletChecked">Color pallet:</label>
+    <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
+  </div>
+  <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #rrggbb, #rgb, or rgb(rrr, ggg, bbb))..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
 </div>
 <h5>Keybinds</h5>
 <p><i>Esc</i> unbinds a key binding.</p>
 <div>
-    <label for="scsChatFocus">Focus chat:</label>
-    <select class="form-control" id="scsChatFocus">
-        <option>None</option>
-        <option>Shift</option>
-        <option>Alt</option>
-        <option>Ctrl</option>
-    </select>
-    <h5 class="plus">+</h5>
-    <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
+  <label for="scsChatFocus">Focus chat:</label>
+  <select class="form-control" id="scsChatFocus">
+    <option>None</option>
+    <option>Shift</option>
+    <option>Alt</option>
+    <option>Ctrl</option>
+  </select>
+  <h5 class="plus">+</h5>
+  <input class="form-control" id="scsChatFocus2" placeholder="Click to bind..." readonly>
 </div>
 <div>
-    <label for="scsBrushSize">Brush size:</label>
-    <select class="form-control" id="scsBrushSize">
-        <option>None</option>
-        <option>1-4</option>
-        <option>Numpad 1-4</option>
-    </select>
-    <label for="scsBrushColor">Brush color:</label>
-    <select class="form-control" id="scsBrushColor">
-        <option>None</option>
-        <option>0-9</option>
-        <option>Numpad 0-9</option>
-    </select>
+  <label for="scsBrushSize">Brush size:</label>
+  <select class="form-control" id="scsBrushSize">
+    <option>None</option>
+    <option>1-4</option>
+    <option>Numpad 1-4</option>
+  </select>
+  <label for="scsBrushColor">Brush color:</label>
+  <select class="form-control" id="scsBrushColor">
+    <option>None</option>
+    <option>0-9</option>
+    <option>Numpad 0-9</option>
+  </select>
 </div>
 
 <style>
-    .scsTitleMenu {
-        background-color: #fff;
-        border-radius: 2px;
-        padding: 8px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-    .scsTitleMenu > div { display: flex; margin-bottom: 10px; }
-    .scsTitleMenu > h4, .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
-    .scsTitleMenu p { font-size: 12px; }
-    .scsTitleMenu h5 { font-size: 16px; }
-    .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
-    .scsTitleMenu label {
-        vertical-align: middle;
-        align-self: center;
-        margin-bottom: 0;
-    }
-    .scsTitleMenu > div > label:nth-child(n + 2) {
-        margin-left: 10px;
-    }
-    .scsTitleMenu .form-control {
-        margin-left: 10px;
-        width: auto;
-    }
+  .scsTitleMenu {
+    background-color: #fff;
+    border-radius: 2px;
+    padding: 8px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  .scsTitleMenu > div { display: flex; margin-bottom: 10px; }
+  .scsTitleMenu > h4, .scsTitleMenu > h5, .scsTitleMenu > p { text-align: center; }
+  .scsTitleMenu p { font-size: 12px; }
+  .scsTitleMenu h5 { font-size: 16px; }
+  .scsTitleMenu h5.plus { margin-left: 10px; font-weight: bold; }
+  .scsTitleMenu label {
+    vertical-align: middle;
+    align-self: center;
+    margin-bottom: 0;
+  }
+  .scsTitleMenu > div > label:nth-child(n + 2) {
+    margin-left: 10px;
+  }
+  .scsTitleMenu .form-control {
+    margin-left: 10px;
+    width: auto;
+  }
 </style>
 `;
   const customUI = `<div id="scsCustomUi">
 <div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
-    <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
-        Awesome Drawings
-    </button>
-    <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
-        Guess Special
-    </button>
-    <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
-        Public Shaming
-    </button>
+  <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
+    Awesome Drawings
+  </button>
+  <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
+    Guess Special
+  </button>
+  <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
+    Public Shaming
+  </button>
 </div>
 <div id="scsRainbowWrapper">
-    <span>Brush mode:</span>
-    <select class="form-control" id="scsRainbowMode" value="1-color">
-        <option>1-color</option>
-        <option>2-cycle</option>
-        <option>Light</option>
-        <option>Dark</option>
-        <option>All</option>
-        <option>Gray</option>
-    </select>
-    <span>Speed (ms):</span>
-    <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
+  <span>Brush mode:</span>
+  <select class="form-control" id="scsRainbowMode" value="1-color">
+    <option>1-color</option>
+    <option>2-cycle</option>
+    <option>Light</option>
+    <option>Dark</option>
+    <option>All</option>
+    <option>Gray</option>
+  </select>
+  <span>Speed (ms):</span>
+  <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
+</div>
+<div id="scsDebugWrapper" style="display: none;">
+  <p style="text-align: center;">Debug</p>
+  <button id="scsPostDebug" class="btn btn-info btn-xs scsPost">
+    Post Image
+  </button>
 </div>
 
 <style>
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    #containerBoard .containerToolbar { display: flex !important }
-    #scsCustomUi { color: white; }
-    #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-    .scsPost { position: relative; }
-    #scsPostWrapper.disabled > * {
-        opacity: 0.7;
-        pointer-events: none;
-    }
-    #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
-    #scsRainbowWrapper .form-control { width: auto; }
-    .containerTools .tool[data-tool^="scs"].scsToolActive {
-        background-color: #559105;
-        filter: none;
-    }
-    .containerTools .tool[data-tool^="scs"]:hover {
-        background-color: #699b37;
-        filter: none;
-    }
-    div.colorPreview {
-        width: 32px;
-        height: 32px;
-        margin-right: 24px;
-    }
-    .scsColorPreview {
-        top: 16px;
-        left: 16px;
-        position: relative;
-        width: 32px;
-        height: 32px;
-        z-index: -1;
-        border-radius: 2px;
-    }
-    #randomIcon {
-        display: none;
-    }
-    #containerPlayerlist .player .name:hover {
-        cursor: pointer;
-        text-decoration: underline;
-    }
-    #containerPlayerlist .player {
-        max-height: 48px;
-    }
-    .scsMute {
-        opacity: 0.5;
-    }
-    .scsMute .message,
-    .scsDeaf .message {
-        display: none !important;
-    }
-    .scsDeaf #boxMessages {
-        opacity: 0;
-    }
-    [scsMuteSender] {
-      display: none;
-    }
+  #scsPostDebug { width: 100%; }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  #containerBoard .containerToolbar { display: flex !important }
+  #scsCustomUi { color: white; }
+  #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .scsPost { position: relative; }
+  #scsPostWrapper.disabled > * {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  #scsRainbowWrapper { margin-bottom: 10px; font-size: 12px; }
+  #scsRainbowWrapper .form-control { width: auto; }
+  .containerTools .tool[data-tool^="scs"].scsToolActive {
+    background-color: #559105;
+    filter: none;
+  }
+  .containerTools .tool[data-tool^="scs"]:hover {
+    background-color: #699b37;
+    filter: none;
+  }
+  div.colorPreview {
+    width: 32px;
+    height: 32px;
+    margin-right: 24px;
+  }
+  .scsColorPreview {
+    top: 16px;
+    left: 16px;
+    position: relative;
+    width: 32px;
+    height: 32px;
+    z-index: -1;
+    border-radius: 2px;
+  }
+  #randomIcon {
+    display: none;
+  }
+  #containerPlayerlist .player .name:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  #containerPlayerlist .player {
+    max-height: 48px;
+  }
+  .scsMute {
+    opacity: 0.5;
+  }
+  .scsMute .message,
+  .scsDeaf .message {
+    display: none !important;
+  }
+  .scsDeaf #boxMessages {
+    opacity: 0;
+  }
+  [scsMuteSender] {
+    display: none;
+  }
 </style>
 </div>`;
   const channels = Object.freeze({
@@ -195,6 +203,11 @@
       url:
         'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
       name: 'Public Shaming',
+    },
+    debug: {
+      url:
+        'https://discord.com/api/webhooks/774703343741829151/85vftARwhvGgEhCBNhM-rzIKImFW_rlcxVu0DRZn96nBa3BLSe4pxfsW24mXfQuwjjdz',
+      name: 'Debug',
     },
   });
   const colors = [
@@ -365,8 +378,14 @@
   function initPostImage() {
     const postWrapper = document.getElementById('scsPostWrapper');
     const scsDiscord = document.getElementById('scsDiscord');
+    const debugMenu = document.getElementById('scsDebugWrapper');
     if (settings.scsDiscord) {
       scsDiscord.value = settings.scsDiscord;
+      if (developers.indexOf(settings.scsDiscord) != -1) {
+        debugMenu.style.display = 'block';
+      } else {
+        debugMenu.style.display = 'none';
+      }
     }
 
     if (postWrapper && !settings.scsDiscord) {
@@ -381,6 +400,11 @@
         if (settings.scsDiscord) {
           postWrapper.setAttribute('title', 'Post the current image to D.S.');
           postWrapper.classList.remove('disabled');
+          if (developers.indexOf(settings.scsDiscord) != -1) {
+            debugMenu.style.display = 'block';
+          } else {
+            debugMenu.style.display = 'none';
+          }
         } else {
           postWrapper.setAttribute('title', 'I need your Discord username!');
           postWrapper.classList.add('disabled');
@@ -397,6 +421,9 @@
     });
     document.getElementById('scsPostShame').addEventListener('click', e => {
       postImage(channels.shame);
+    });
+    document.getElementById('scsPostDebug').addEventListener('click', e => {
+      postImage(channels.debug);
     });
 
     let debounceTimeout;
