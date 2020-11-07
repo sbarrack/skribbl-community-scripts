@@ -974,7 +974,7 @@
     initGameObserver();
 
     document.addEventListener('keydown', e => {
-      if (document.activeElement.id !== 'inputChat') {
+      if (document.activeElement.tagName !== 'INPUT') {
         focusChat(e);
         toggleHotkeys(e);
         selectBrushSize(e);
