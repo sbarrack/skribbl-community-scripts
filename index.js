@@ -292,6 +292,7 @@
   let lastColorIdx = 11;
   let canvas,
     currentWord,
+    solvedWord,
     timer,
     chatModKey,
     chatFocusKey,
@@ -299,8 +300,7 @@
     brushSizes,
     brushColors,
     currentGamemode,
-    artist,
-    solvedWord;
+    artist;
 
   let primaryActiveColor, secondaryActiveColor;
   let isHatcheting, hatchInterval;
