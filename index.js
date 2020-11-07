@@ -14,7 +14,7 @@
 
 (function ($) {
   // #region Consts
-  const developers = Object.freeze(['S', 'Jess 🎷']);
+  const developers = Object.freeze(['S', 'Jess']);
   const keybindPanel = `
 <h4>Don't Spell</h4>
 <div>
