@@ -264,7 +264,9 @@
   settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
     settingKeys.forEach(key => {
-      if (settings[key] !== undefined) {
+      if (!settings[key] || settings[key] === 'null') {
+        localStorage.removeItem(key);
+      } else {
         localStorage.setItem(key, settings[key]);
       }
     });
@@ -285,7 +287,6 @@
     brushSizes,
     brushColors,
     currentGamemode,
-    discordTag,
     artist;
 
   let primaryActiveColor, secondaryActiveColor;
@@ -322,7 +323,7 @@
     } else if (chatModKey === 'Ctrl') {
       modKey = e.ctrlKey;
     }
-    if ((e.key === chatFocusKey && modKey) || (!chatFocusKey && e.key === chatModKey)) {
+    if (modKey && (!chatFocusKey || e.key === chatFocusKey)) {
       e.preventDefault();
       chatInput.focus();
     }
@@ -412,7 +413,7 @@
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(clearDebounce, 3000);
-      } else if (discordTag) {
+      } else if (settings.scsDiscord) {
         debounceTimeout = setTimeout(clearDebounce, 3000);
         if (channel.name === channels.guess.name) {
           let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
@@ -432,7 +433,7 @@
         data.append('image', canvasImage);
         data.append('name', Date.now() + '.png');
         data.append('title', word + ' by ' + artist);
-        data.append('description', 'Posted by ' + discordTag);
+        data.append('description', 'Posted by ' + settings.scsDiscord);
         fetch('https://api.imgur.com/3/image', {
           method: 'POST',
           headers: new Headers({ Authorization: 'Client-ID b5db76b67498dd6' }),
@@ -461,7 +462,7 @@
                         url: 'https://github.com/sbarrack/skribbl-community-scripts/',
                         color: colors[Math.floor(Math.random() * colors.length)],
                         timestamp: new Date(),
-                        footer: { text: discordTag },
+                        footer: { text: settings.scsDiscord },
                         image: { url: res2.data.link },
                       },
                     ],
