@@ -437,6 +437,7 @@
       let word = currentWord.innerText;
       const timeLeft = timer.innerText;
 
+      let wordParsed;
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(clearDebounce, 3000);
