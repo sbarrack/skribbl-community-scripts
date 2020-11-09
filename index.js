@@ -12,7 +12,7 @@
 // ==/UserScript==
 'use strict';
 
-(function ($) {
+(function($) {
   // #region Consts
   const developers = Object.freeze(['S', 'Jess']);
   const keybindPanel = `
@@ -292,7 +292,7 @@
   let lastColorIdx = 11;
   let canvas,
     currentWord,
-    solutionText,
+    solvedWord,
     timer,
     chatModKey,
     chatFocusKey,
@@ -434,9 +434,10 @@
 
     function postImage(channel) {
       const canvasImage = canvas.toDataURL().split(',')[1];
-      let wordParsed = solutionText.innerText;
       let word = currentWord.innerText;
       const timeLeft = timer.innerText;
+
+      let wordParsed;
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(clearDebounce, 3000);
@@ -450,12 +451,12 @@
           words = words.join(' ');
           wordParsed =
             word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
+        } else if (solvedWord) {
+          wordParsed = solvedWord;
         } else {
-          if (wordParsed.startsWith('The word was: ')) {
-            word = wordParsed.slice(14);
-          }
           wordParsed = word.replace(/_/g, '\\*');
         }
+
         const data = new FormData();
         data.append('image', canvasImage);
         data.append('name', Date.now() + '.png');
@@ -594,7 +595,8 @@
     scsAnchor.style.display = 'none';
     scsAnchor.style.position = 'absolute';
     scsAnchor.style.pointerEvents = 'none';
-    scsAnchor.src = 'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
+    scsAnchor.src =
+      'https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/images/anchor.png';
     document.body.appendChild(scsAnchor);
 
     scsElements.scsAnchor = scsAnchor;
@@ -847,11 +849,14 @@
                     const t = color.length == 7;
                     brushColors[index].style.backgroundColor = color;
                     colors[index] = parseInt(color.slice(1), 16);
-                    colorsRGB[index] = 'rgb(' + [
-                      parseInt(color.slice(1, t ? 3 : 2), 16).toString(10),
-                      parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10),
-                      parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10)
-                    ].join(', ') + ')';
+                    colorsRGB[index] =
+                      'rgb(' +
+                      [
+                        parseInt(color.slice(1, t ? 3 : 2), 16).toString(10),
+                        parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10),
+                        parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10),
+                      ].join(', ') +
+                      ')';
                   } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) {
                     // Test for RGB
                     colorsRGB[index] = color;
@@ -882,6 +887,7 @@
       const drawer = mutations[0].target;
 
       if (drawer.style.display !== 'none') {
+        solvedWord = '';
         setTimeout(() => {
           artist = drawer.closest('.player').querySelector('.name').innerHTML;
         }, 3000);
@@ -917,6 +923,12 @@
           if (sender.endsWith(': ') && playerBlacklist.includes(senderParsed)) {
             msg.setAttribute('scsMuteSender', senderParsed);
           }
+
+
+          const wordMatch = sender.match(/The word was '(?<word>.*)'/);
+          if (wordMatch) {
+            solvedWord = wordMatch.groups.word;
+          }
         });
       });
     });
@@ -943,7 +955,6 @@
 
   function init() {
     canvas = document.getElementById('canvasGame');
-    solutionText = document.querySelector('#overlay .text');
     currentWord = document.getElementById('currentWord');
     timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
