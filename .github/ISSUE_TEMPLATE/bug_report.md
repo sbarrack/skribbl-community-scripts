@@ -26,6 +26,7 @@ If applicable, add screenshots to help explain your problem.
 **Desktop (please complete the following information):**
  - OS: [e.g. iOS]
  - Browser [e.g. chrome, firefox]
+ - Browser extensions [e.g. Skribbl Typo, Tampermonkey]
 
 **Additional context**
 Add any other context about the problem here.
