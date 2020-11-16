@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Master Skribbl Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      1.0
+// @version      1.1
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
@@ -12,7 +12,7 @@
 // ==/UserScript==
 'use strict';
 
-(function($) {
+(function ($) {
   // #region Consts
   const developers = Object.freeze(['S', 'Jess']);
   const keybindPanel = `
@@ -118,9 +118,8 @@
   <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
 </div>
 <div id="scsDebugWrapper" style="display: none;">
-  <p style="text-align: center;">Debug</p>
   <button id="scsPostDebug" class="btn btn-info btn-xs scsPost">
-    Post Image
+    Debug Drawings
   </button>
 </div>
 
@@ -300,7 +299,9 @@
     brushSizes,
     brushColors,
     currentGamemode,
-    artist;
+    artist,
+    undoButton,
+    previousGuess = '';
 
   let primaryActiveColor, secondaryActiveColor;
   let isHatcheting, hatchInterval;
@@ -924,7 +925,6 @@
             msg.setAttribute('scsMuteSender', senderParsed);
           }
 
-
           const wordMatch = sender.match(/The word was '(?<word>.*)'/);
           if (wordMatch) {
             solvedWord = wordMatch.groups.word;
@@ -953,11 +953,18 @@
     }
   }
 
+  function undoShortcut(e) {
+    if (e.key === 'z' && e.ctrlKey) {
+      undoButton.click();
+    }
+  }
+
   function init() {
     canvas = document.getElementById('canvasGame');
     currentWord = document.getElementById('currentWord');
     timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
+    undoButton = document.getElementById('restore');
 
     const panelElem = document.createElement('div');
     panelElem.classList.add('scsTitleMenu');
@@ -990,6 +997,13 @@
         toggleHotkeys(e);
         selectBrushSize(e);
         selectBrushColor(e);
+        undoShortcut(e);
+      } else if (document.activeElement.id === 'inputChat') {
+        if (e.key === 'ArrowUp') {
+          chatInput.value = previousGuess;
+        } else if (e.key === 'Enter') {
+          previousGuess = chatInput.value;
+        }
       }
     });
 
