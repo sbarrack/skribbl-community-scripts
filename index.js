@@ -300,6 +300,7 @@
     brushColors,
     currentGamemode,
     artist,
+    undoButton,
     previousGuess = '';
 
   let primaryActiveColor, secondaryActiveColor;
@@ -952,11 +953,18 @@
     }
   }
 
+  function undoShortcut(e) {
+    if (e.key === 'z' && e.ctrlKey) {
+      undoButton.click();
+    }
+  }
+
   function init() {
     canvas = document.getElementById('canvasGame');
     currentWord = document.getElementById('currentWord');
     timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
+    undoButton = document.getElementById('restore');
 
     const panelElem = document.createElement('div');
     panelElem.classList.add('scsTitleMenu');
@@ -989,6 +997,7 @@
         toggleHotkeys(e);
         selectBrushSize(e);
         selectBrushColor(e);
+        undoShortcut(e);
       } else if (document.activeElement.id === 'inputChat') {
         if (e.key === 'ArrowUp') {
           chatInput.value = previousGuess;

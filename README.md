@@ -23,22 +23,20 @@ A collection of user scripts for skribbl.io
     - All: Cycles through the full pallet
     - Grey: Cycles through the 4, leftmost colors of the pallet
   - "Speed (ms)" changes the rate at which the hatching tool draws lines and the magic brush changes color. Smaller values equals faster switching
+- Up arrow while typing in chat to retype the last message you sent
 - For usage of the new tools added to the toolbar on the bottom of the game page, hover over the icon for a tooltip with instructions
 
-## Features
-- Settings and keybind menu
-- Color toggling
-- Magic brush tool
-  - Single color mode - Spice
-  - Two color mode
-  - Various rainbows - Spice
-- Image poster - Jess, Ente
-- Focus chat shortcut - Photon
-- Gamemodes
-  - Blind - Spice
-  - Deaf
-  - One shot
-- Hatching brush tool - Spice
-- Color picking - Tobeh
-- Custom color pallets - Tobeh
-- Player muter
+## Attributions
+- Ente
+  - Image poster
+- Jess
+  - Image poster
+- Photon
+  - Chat focus shortcut
+- Spice
+  - Magic brush
+  - Blind gamemode
+  - Hatching brush
+- Tobeh
+  - Color picking
+  - Custom palettes
