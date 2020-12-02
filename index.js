@@ -779,7 +779,8 @@
         } else {
           playerBlacklist.splice(nameIdx, 1);
           e.target.parentElement.parentElement.classList.remove('scsMute');
-          Array.from(document.querySelectorAll(`[scsMuteSender=${name}]`)).forEach((v, i, a) => {
+          const escapedName = name.replace(/["\\]/g, '\\$&');
+          Array.from(document.querySelectorAll(`[scsMuteSender="${escapedName}"]`)).forEach((v, i, a) => {
             v.removeAttribute('scsMuteSender');
           });
         }
