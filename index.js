@@ -124,6 +124,13 @@
 </div>
 
 <style>
+  div#currentWord { text-align: right; }
+  #scsWordSize {
+    flex: 1 1 auto;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+  }
   #scsPostDebug { width: 100%; }
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {
@@ -301,6 +308,7 @@
     currentGamemode,
     artist,
     undoButton,
+    currentWordSize,
     previousGuess = '';
 
   let primaryActiveColor, secondaryActiveColor;
@@ -759,11 +767,9 @@
   }
 
   function initChatBlacklist() {
-    // TODO: Change t.target.parentElement.parentElement with static reference (same in chat observer)
     document.addEventListener('click', e => {
       if (
-        e.target.classList.contains('name') &&
-        e.target.parentElement.parentElement.classList.contains('player')
+        e.target.classList.contains('name') && e.target.closest('#containerGamePlayers')
       ) {
         e.stopImmediatePropagation();
         const name = e.target.innerText;
@@ -780,12 +786,29 @@
           playerBlacklist.splice(nameIdx, 1);
           e.target.parentElement.parentElement.classList.remove('scsMute');
           const escapedName = name.replace(/["\\]/g, '\\$&');
-          Array.from(document.querySelectorAll(`[scsMuteSender="${escapedName}"]`)).forEach((v, i, a) => {
-            v.removeAttribute('scsMuteSender');
-          });
+          Array.from(document.querySelectorAll(`[scsMuteSender="${escapedName}"]`)).forEach(
+            (v, i, a) => {
+              v.removeAttribute('scsMuteSender');
+            }
+          );
         }
       }
     });
+  }
+
+  function setWordCount() {
+    let wordCount = currentWord.innerText;
+    if (wordCount) {
+      wordCount = wordCount.split(' ');
+
+      wordCount.forEach((v, i, a) => {
+        a[i] = v.replaceAll('-', '').length;
+      });
+
+      currentWordSize.innerHTML = `&nbsp;(${wordCount.join(',')})`;
+    } else {
+      currentWordSize.innerHTML = '';
+    }
   }
 
   function initGameObserver() {
@@ -812,6 +835,8 @@
         } else {
           document.getElementsByClassName('containerGame')[0].classList.remove('scsDeaf');
           currentWord.style.opacity = 1;
+
+          setWordCount();
         }
 
         if (currentGamemode === 'One shot') {
@@ -823,21 +848,27 @@
           }
 
           chatInput.addEventListener('keyup', oneshot);
+        }
 
-          const drawingObserver = new MutationObserver(mutations => {
-            const overlay = mutations[0].target;
-            if (overlay.style.display !== 'none') {
+        const drawingObserver = new MutationObserver(mutations => {
+          const overlay = mutations[0].target;
+          if (overlay.style.display !== 'none') {
+            if (currentGamemode === 'Deaf') {
               chatInput.disabled = false;
               chatInput.removeEventListener('keyup', oneshot);
+            }
+          } else {
+            if (currentGamemode !== 'Deaf') {
+              setWordCount();
             } else {
               chatInput.addEventListener('keyup', oneshot);
             }
-          });
-          drawingObserver.observe(document.getElementById('overlay'), {
-            attributes: true,
-            attributeFilter: ['style'],
-          });
-        }
+          }
+        });
+        drawingObserver.observe(document.getElementById('overlay'), {
+          attributes: true,
+          attributeFilter: ['style'],
+        });
 
         // Custom color pallet
         if (settings.scsPallet && scsElements.palletCheckedInput.checked) {
@@ -879,7 +910,6 @@
         }
       }
     });
-
     gameObserver.observe(document.getElementById('screenGame'), {
       attributes: true,
       attributeFilter: ['style'],
@@ -966,6 +996,10 @@
     timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
     undoButton = document.getElementById('restore');
+
+    currentWordSize = document.createElement('div');
+    currentWordSize.id = 'scsWordSize';
+    currentWord.parentNode.insertBefore(currentWordSize, currentWord.nextSibling);
 
     const panelElem = document.createElement('div');
     panelElem.classList.add('scsTitleMenu');
