@@ -1,12 +1,15 @@
 # skribbl-community-scripts
+
 A collection of user scripts for skribbl.io
 
 ## Installation
+
 1. Install Tampermonkey browser extension
 2. Paste "index.js" into a new script
 3. Turn on automatic updates
 
 ## Usage
+
 - Scroll to the *Don't Spell* menu on the landing page
   - Set your Discord username to post pictures
   - Choose a desired gamemode or "None" if none
@@ -27,6 +30,7 @@ A collection of user scripts for skribbl.io
 - For usage of the new tools added to the toolbar on the bottom of the game page, hover over the icon for a tooltip with instructions
 
 ## Attributions
+
 - Ente
   - Image poster
 - Jess
