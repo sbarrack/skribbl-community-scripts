@@ -839,14 +839,14 @@
           setWordCount();
         }
 
-        if (currentGamemode === 'One shot') {
-          function oneshot(e) {
-            if (e.key === 'Enter') {
-              chatInput.disabled = true;
-              chatInput.removeEventListener('keyup', oneshot);
-            }
+        function oneshot(e) {
+          if (e.key === 'Enter') {
+            chatInput.disabled = true;
+            chatInput.removeEventListener('keyup', oneshot);
           }
+        }
 
+        if (currentGamemode === 'One shot') {
           chatInput.addEventListener('keyup', oneshot);
         }
 
@@ -859,7 +859,7 @@
             }
           } else {
             if (currentGamemode !== 'Deaf') {
-              setWordCount();
+              setTimeout(setWordCount, 2000);
             } else {
               chatInput.addEventListener('keyup', oneshot);
             }
@@ -922,7 +922,7 @@
         solvedWord = '';
         setTimeout(() => {
           artist = drawer.closest('.player').querySelector('.name').innerHTML;
-        }, 3000);
+        }, 5000);
       }
     });
 
