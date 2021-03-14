@@ -328,21 +328,12 @@
   }
 
   function init() {
-    canvas = document.getElementById('canvasGame');
     currentWord = document.getElementById('currentWord');
-    timer = document.getElementById('timer');
-    chatInput = document.getElementById('inputChat');
-    undoButton = document.getElementById('restore');
 
     currentWordSize = document.createElement('div');
     currentWordSize.id = 'scsWordSize';
     currentWord.parentNode.insertBefore(currentWordSize, currentWord.nextSibling);
 
-    const panelElem = document.createElement('div');
-    panelElem.classList.add('scsTitleMenu');
-    panelElem.innerHTML = keybindPanel;
-    const userPanel = document.querySelector('#screenLogin > .login-content > .loginPanelContent');
-    userPanel.parentNode.insertBefore(panelElem, userPanel.nextSibling);
     const penTooltip = document.querySelector('[data-tool="pen"] > .toolIcon');
     penTooltip.setAttribute('title', '(B)rush (middle click to pick colors)');
     $(penTooltip).tooltip('fixTitle');
