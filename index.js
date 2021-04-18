@@ -98,6 +98,7 @@
 </div>
 
 <style>
+  #rateDrawing { position: fixed; }
   div#currentWord { text-align: right; }
   #scsWordSize {
     flex: 1 1 auto;
@@ -113,7 +114,7 @@
   #containerBoard .containerToolbar { display: flex !important }
   #scsCustomUi { color: white; }
   #scsCustomUi > div { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-  .scsPost { position: relative; }
+  .scsPost { position: relative; width: 100%; }
   #scsPostWrapper.disabled > * {
     opacity: 0.7;
     pointer-events: none;
@@ -380,9 +381,12 @@
             res
               .json()
               .then(res2 => {
-                alert('res2.data.link');
+                alert(res2.data.link);
               })
-              .catch(err => console.debug(err));
+              .catch(err => {
+                console.debug(err);
+                alert('Failed to send image to imgur :(');
+              });
           })
           .catch(err => console.debug(err));
       }
