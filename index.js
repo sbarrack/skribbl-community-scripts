@@ -13,11 +13,6 @@
   // #region Consts
   const developers = Object.freeze(['S', 'Jess']);
   const keybindPanel = `
-<h4>Don't Spell</h4>
-<div>
-  <label for="scsDiscord">Username:</label>
-  <input class="form-control" id="scsDiscord" autocomplete maxlength="32" placeholder="Discord username here..." style="width: 100%;">
-</div>
 <div>
   <label for="scsGamemode">Gamemode:</label>
   <select class="form-control" id="scsGamemode">
@@ -26,13 +21,6 @@
     <option>Deaf</option>
     <option>One shot</option>
   </select>
-</div>
-<div style="display: inline !important;">
-  <div style="margin-bottom: 5px; display: flex; align-items: center;">
-    <label for="scsPalletChecked">Color pallet:</label>
-    <input class="form-check-input" type="checkbox" id="scsPalletChecked" style="margin: 0 0 0 10px;" value="palletEnabled">
-  </div>
-  <textarea id="scsPallet" class="form-control" placeholder="JSON-formatted CSS color values (e.g. #rrggbb, #rgb, or rgb(rrr, ggg, bbb))..." style="width: 100%; margin: 0; max-height: 20em; min-height: 7em; resize: vertical;"></textarea>
 </div>
 <h5>Keybinds</h5>
 <p><i>Esc</i> unbinds a key binding.</p>
@@ -90,15 +78,9 @@
 </style>
 `;
   const customUI = `<div id="scsCustomUi">
-<div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Post the current image to D.S.">
+<div id="scsPostWrapper" data-toggle="tooltip" data-placement="top" title="Save the current image">
   <button id="scsPostAwesome" class="btn btn-success btn-xs scsPost">
-    Awesome Drawings
-  </button>
-  <button id="scsPostGuess" class="btn btn-warning btn-xs scsPost">
-    Guess Special
-  </button>
-  <button id="scsPostShame" class="btn btn-danger btn-xs scsPost">
-    Public Shaming
+    Save Drawing
   </button>
 </div>
 <div id="scsRainbowWrapper">
@@ -114,11 +96,6 @@
   <span>Speed (ms):</span>
   <input type="number" id="scsRainbowSpeed" class="form-control" min="10" max="1000" value="50" step="10" size="4" maxlength="4">
 </div>
-<div id="scsDebugWrapper" style="display: none;">
-  <button id="scsPostDebug" class="btn btn-info btn-xs scsPost">
-    Debug Drawings
-  </button>
-</div>
 
 <style>
   div#currentWord { text-align: right; }
@@ -128,7 +105,6 @@
     font-weight: 700;
     letter-spacing: 3px;
   }
-  #scsPostDebug { width: 100%; }
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -191,28 +167,6 @@
   }
 </style>
 </div>`;
-  const channels = Object.freeze({
-    awesome: {
-      url:
-        'https://discordapp.com/api/webhooks/752344316965421176/9mhUnpdXj-nmjB_L93yOeA3ZwQUD6vanFU1kMQkNJ96VVNCL0arhvz1gCvIm3ycifCOv',
-      name: 'Awesome Drawing',
-    },
-    guess: {
-      url:
-        'https://discordapp.com/api/webhooks/752343877247303761/fiIApqzoCfjVOQmLHBQmtSTDtZZvcibIoriIVZ5BXo5y5tq1fIR7K3OY1hlxyn70QklN',
-      name: 'Guess this Special Drawing',
-    },
-    shame: {
-      url:
-        'https://discordapp.com/api/webhooks/751460495445327973/efFzJ6ZtVsAwNpqf29Lgtm_idqSbRIwzdi6fehhfxTxYZOa0g0BDJiOKAy1Gsy7nlDA_',
-      name: 'Public Shaming',
-    },
-    debug: {
-      url:
-        'https://discord.com/api/webhooks/774703343741829151/85vftARwhvGgEhCBNhM-rzIKImFW_rlcxVu0DRZn96nBa3BLSe4pxfsW24mXfQuwjjdz',
-      name: 'Debug',
-    },
-  });
   const colors = [
     0xffffff,
     0xc1c1c1,
@@ -265,12 +219,9 @@
     'scsChatFocus',
     'scsChatFocus2',
     'scsChatFocus2',
-    'scsDiscord',
     'scsGamemode',
     'scsBrushSize',
     'scsBrushColor',
-    'scsPallet',
-    'scsPalletChecked',
     'scsRainbowMode',
     'scsRainbowSpeed',
   ];
@@ -304,7 +255,6 @@
     brushColors,
     currentGamemode,
     artist,
-    undoButton,
     currentWordSize,
     previousGuess = '';
 
@@ -383,53 +333,14 @@
 
   function initPostImage() {
     const postWrapper = document.getElementById('scsPostWrapper');
-    const scsDiscord = document.getElementById('scsDiscord');
-    const debugMenu = document.getElementById('scsDebugWrapper');
-    if (settings.scsDiscord) {
-      scsDiscord.value = settings.scsDiscord;
-      if (developers.indexOf(settings.scsDiscord) != -1) {
-        debugMenu.style.display = 'block';
-      } else {
-        debugMenu.style.display = 'none';
-      }
-    }
 
-    if (postWrapper && !settings.scsDiscord) {
-      postWrapper.setAttribute('title', 'I need your Discord username!');
-      postWrapper.classList.add('disabled');
+    if (postWrapper) {
+      postWrapper.setAttribute('title', 'Save the current image');
+      $(postWrapper).tooltip();
     }
-
-    $(postWrapper).tooltip();
-    scsDiscord.addEventListener('change', e => {
-      settings.scsDiscord = e.target.value;
-      if (postWrapper) {
-        if (settings.scsDiscord) {
-          postWrapper.setAttribute('title', 'Post the current image to D.S.');
-          postWrapper.classList.remove('disabled');
-          if (developers.indexOf(settings.scsDiscord) != -1) {
-            debugMenu.style.display = 'block';
-          } else {
-            debugMenu.style.display = 'none';
-          }
-        } else {
-          postWrapper.setAttribute('title', 'I need your Discord username!');
-          postWrapper.classList.add('disabled');
-        }
-        $(postWrapper).tooltip('fixTitle');
-      }
-    });
 
     document.getElementById('scsPostAwesome').addEventListener('click', e => {
-      postImage(channels.awesome);
-    });
-    document.getElementById('scsPostGuess').addEventListener('click', e => {
-      postImage(channels.guess);
-    });
-    document.getElementById('scsPostShame').addEventListener('click', e => {
-      postImage(channels.shame);
-    });
-    document.getElementById('scsPostDebug').addEventListener('click', e => {
-      postImage(channels.debug);
+      postImage();
     });
 
     let debounceTimeout;
@@ -438,7 +349,7 @@
       debounceTimeout = 0;
     }
 
-    function postImage(channel) {
+    function postImage() {
       const canvasImage = canvas.toDataURL().split(',')[1];
       let word = currentWord.innerText;
       const timeLeft = timer.innerText;
@@ -447,17 +358,9 @@
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(clearDebounce, 3000);
-      } else if (settings.scsDiscord) {
+      } else {
         debounceTimeout = setTimeout(clearDebounce, 3000);
-        if (channel.name === channels.guess.name) {
-          let words = word.split(/(\s+)/).filter(e => e.trim().length > 0);
-          words.forEach((v, i, a) => {
-            a[i] = v.length.toString(10);
-          });
-          words = words.join(' ');
-          wordParsed =
-            word.replace(/[a-z_]/gi, '\\*') + ` ${words} ||${word.replace(/_/g, '\\*')}||`;
-        } else if (solvedWord) {
+        if (solvedWord) {
           wordParsed = solvedWord;
         } else {
           wordParsed = word.replace(/_/g, '\\*');
@@ -467,7 +370,7 @@
         data.append('image', canvasImage);
         data.append('name', Date.now() + '.png');
         data.append('title', word + ' by ' + artist);
-        data.append('description', 'Posted by ' + settings.scsDiscord);
+        data.append('description', 'Saved image from skribbl.io');
         fetch('https://api.imgur.com/3/image', {
           method: 'POST',
           headers: new Headers({ Authorization: 'Client-ID b5db76b67498dd6' }),
@@ -477,33 +380,7 @@
             res
               .json()
               .then(res2 => {
-                fetch(channel.url, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    embeds: [
-                      {
-                        title: channel.name,
-                        description:
-                          wordParsed +
-                          ' by ' +
-                          artist +
-                          '\n' +
-                          res2.data.link +
-                          ' with ' +
-                          timeLeft +
-                          ' sec(s) remaining',
-                        url: 'https://github.com/sbarrack/skribbl-community-scripts/',
-                        color: colors[Math.floor(Math.random() * colors.length)],
-                        timestamp: new Date(),
-                        footer: { text: settings.scsDiscord },
-                        image: { url: res2.data.link },
-                      },
-                    ],
-                  }),
-                })
-                  .then(res => console.debug(res))
-                  .catch(err => console.debug(err));
+                alert('res2.data.link');
               })
               .catch(err => console.debug(err));
           })
@@ -739,30 +616,6 @@
     scsElements.rainbowSpeed = rainbowSpeedInput;
   }
 
-  function initPallet() {
-    // Load value from settings to pallet input
-    const palletInput = document.getElementById('scsPallet');
-    if (settings.scsPallet) {
-      palletInput.value = settings.scsPallet;
-    }
-
-    // Load value from settings to palletChecked input
-    const palletCheckedInput = document.getElementById('scsPalletChecked');
-    palletCheckedInput.checked = settings.scsPalletChecked === 'true';
-
-    // onChange logic
-    palletInput.addEventListener('change', e => {
-      const prettyPallet = JSON.stringify(JSON.parse(e.target.value));
-      settings.scsPallet = prettyPallet;
-    });
-
-    palletCheckedInput.addEventListener('change', e => {
-      settings.scsPalletChecked = e.target.checked;
-    });
-
-    scsElements.palletCheckedInput = palletCheckedInput;
-  }
-
   function initChatBlacklist() {
     document.addEventListener('click', e => {
       if (e.target.classList.contains('name') && e.target.closest('#containerGamePlayers')) {
@@ -834,14 +687,14 @@
           setWordCount();
         }
 
-        if (currentGamemode === 'One shot') {
-          function oneshot(e) {
-            if (e.key === 'Enter') {
-              chatInput.disabled = true;
-              chatInput.removeEventListener('keyup', oneshot);
-            }
+        function oneshot(e) {
+          if (e.key === 'Enter') {
+            chatInput.disabled = true;
+            chatInput.removeEventListener('keyup', oneshot);
           }
+        }
 
+        if (currentGamemode === 'One shot') {
           chatInput.addEventListener('keyup', oneshot);
         }
 
@@ -864,45 +717,6 @@
           attributes: true,
           attributeFilter: ['style'],
         });
-
-        // Custom color pallet
-        if (settings.scsPallet && scsElements.palletCheckedInput.checked) {
-          const pallet = JSON.parse(settings.scsPallet);
-          if (pallet && pallet.colors) {
-            pallet.colors.forEach(({ color, index }) => {
-              if (Number.isSafeInteger(index)) {
-                if ((index > 0 && index < 11) || (index > 11 && index < 22)) {
-                  if (/^#([0-9a-f]{3}){1,2}$/i.test(color)) {
-                    // Test for Hex
-                    const t = color.length == 7;
-                    brushColors[index].style.backgroundColor = color;
-                    colors[index] = parseInt(color.slice(1), 16);
-                    colorsRGB[index] =
-                      'rgb(' +
-                      [
-                        parseInt(color.slice(1, t ? 3 : 2), 16).toString(10),
-                        parseInt(color.slice(t ? 3 : 2, t ? 5 : 3), 16).toString(10),
-                        parseInt(color.slice(t ? 5 : 3, t ? 7 : 4), 16).toString(10),
-                      ].join(', ') +
-                      ')';
-                  } else if (/rgb\((\d{1,3}), (\d{1,3}), (\d{1,3})\)/.test(color)) {
-                    // Test for RGB
-                    colorsRGB[index] = color;
-                    let components = color.slice(4, color.length - 1).split(', ');
-                    components.forEach((w, j, b) => {
-                      b[j] = parseInt(w, 10).toString(16);
-                    });
-                    components = components.join('');
-                    brushColors[index].style.backgroundColor = '#' + components;
-                    colors[index] = parseInt(components, 16);
-                  } else {
-                    console.error(`Invalid color ${color} at index ${index}!`);
-                  }
-                }
-              }
-            });
-          }
-        }
       }
     });
     gameObserver.observe(document.getElementById('screenGame'), {
@@ -979,18 +793,11 @@
     }
   }
 
-  function undoShortcut(e) {
-    if (e.key === 'z' && e.ctrlKey) {
-      undoButton.click();
-    }
-  }
-
   function init() {
     canvas = document.getElementById('canvasGame');
     currentWord = document.getElementById('currentWord');
     timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
-    undoButton = document.getElementById('restore');
 
     currentWordSize = document.createElement('div');
     currentWordSize.id = 'scsWordSize';
@@ -1017,7 +824,6 @@
 
     initHatching();
     initRainbow();
-    initPallet();
     initChatBlacklist();
     initGameObserver();
 
@@ -1027,7 +833,6 @@
         toggleHotkeys(e);
         selectBrushSize(e);
         selectBrushColor(e);
-        undoShortcut(e);
       } else if (document.activeElement.id === 'inputChat') {
         if (e.key === 'ArrowUp') {
           chatInput.value = previousGuess;
