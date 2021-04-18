@@ -5,6 +5,8 @@
 // @description  Collected and reworked Skribbl scripts
 // @author       sbarrack
 // @match        http*://skribbl.io/*
+// @updateURL    https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
+// @downloadURL  https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
 // @grant        none
 // ==/UserScript==
 'use strict';
