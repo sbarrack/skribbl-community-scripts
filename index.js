@@ -1,19 +1,16 @@
 // ==UserScript==
-// @name         Master Skribbl Script
+// @name         Skribbl Community Script
 // @namespace    https://github.com/sbarrack/skribbl-community-scripts/
-// @version      1.4
-// @description  Collected and reworked Skribbl scripts
-// @author       sbarrack
+// @version      2.0
+// @description  A compilation of userscripts for Skribbl.io
+// @author       sbarrack, JasonMan34
 // @match        http*://skribbl.io/*
-// @updateURL    https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
-// @downloadURL  https://raw.githubusercontent.com/sbarrack/skribbl-community-scripts/master/index.js
 // @grant        none
 // ==/UserScript==
 'use strict';
 
 (function ($) {
   // #region Consts
-  const developers = Object.freeze(['S', 'Jess']);
   const keybindPanel = `
 <div>
   <label for="scsGamemode">Gamemode:</label>
@@ -171,28 +168,9 @@
 </style>
 </div>`;
   const colors = [
-    0xffffff,
-    0xc1c1c1,
-    0xef130b,
-    0xff7100,
-    0xffe400,
-    0x00cc00,
-    0x00b2ff,
-    0x231fd3,
-    0xa300ba,
-    0xd37caa,
-    0xa0522d,
-    0x000000,
-    0x4c4c4c,
-    0x740b07,
-    0xc23800,
-    0xe8a200,
-    0x005510,
-    0x00569e,
-    0x0e0865,
-    0x550069,
-    0xa75574,
-    0x63300d,
+    0xffffff, 0xc1c1c1, 0xef130b, 0xff7100, 0xffe400, 0x00cc00, 0x00b2ff, 0x231fd3, 0xa300ba,
+    0xd37caa, 0xa0522d, 0x000000, 0x4c4c4c, 0x740b07, 0xc23800, 0xe8a200, 0x005510, 0x00569e,
+    0x0e0865, 0x550069, 0xa75574, 0x63300d,
   ];
   const colorsRGB = [
     'rgb(255, 255, 255)',
@@ -231,9 +209,9 @@
   // #endregion
 
   const settings = {};
-  settingKeys.forEach(key => (settings[key] = localStorage.getItem(key)));
+  settingKeys.forEach((key) => (settings[key] = localStorage.getItem(key)));
   addEventListener('beforeunload', () => {
-    settingKeys.forEach(key => {
+    settingKeys.forEach((key) => {
       if (!settings[key] || settings[key] === 'null') {
         localStorage.removeItem(key);
       } else {
@@ -249,8 +227,6 @@
   let lastColorIdx = 11;
   let canvas,
     currentWord,
-    solvedWord,
-    timer,
     chatModKey,
     chatFocusKey,
     chatInput,
@@ -305,7 +281,7 @@
     const focusKeybind = document.getElementById('scsChatFocus');
     chatModKey = settings.scsChatFocus;
     focusKeybind.value = chatModKey || 'None';
-    focusKeybind.addEventListener('change', e => {
+    focusKeybind.addEventListener('change', (e) => {
       settings.scsChatFocus = e.target.value;
       chatModKey = e.target.value;
     });
@@ -313,7 +289,7 @@
     const focusKeybind2 = document.getElementById('scsChatFocus2');
     chatFocusKey = settings.scsChatFocus2;
     focusKeybind2.value = chatFocusKey;
-    focusKeybind2.addEventListener('click', e => {
+    focusKeybind2.addEventListener('click', () => {
       function bindKey(e) {
         if (e.key !== 'Escape') {
           settings.scsChatFocus2 = e.key;
@@ -342,7 +318,7 @@
       $(postWrapper).tooltip();
     }
 
-    document.getElementById('scsPostAwesome').addEventListener('click', e => {
+    document.getElementById('scsPostAwesome').addEventListener('click', () => {
       postImage();
     });
 
@@ -355,19 +331,12 @@
     function postImage() {
       const canvasImage = canvas.toDataURL().split(',')[1];
       let word = currentWord.innerText;
-      const timeLeft = timer.innerText;
 
-      let wordParsed;
       if (debounceTimeout) {
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(clearDebounce, 3000);
       } else {
         debounceTimeout = setTimeout(clearDebounce, 3000);
-        if (solvedWord) {
-          wordParsed = solvedWord;
-        } else {
-          wordParsed = word.replace(/_/g, '\\*');
-        }
 
         const data = new FormData();
         data.append('image', canvasImage);
@@ -379,18 +348,18 @@
           headers: new Headers({ Authorization: 'Client-ID b5db76b67498dd6' }),
           body: data,
         })
-          .then(res => {
+          .then((res) => {
             res
               .json()
-              .then(res2 => {
+              .then((res2) => {
                 alert(res2.data.link);
               })
-              .catch(err => {
+              .catch((err) => {
                 console.debug(err);
                 alert('Failed to send image to imgur :(');
               });
           })
-          .catch(err => console.debug(err));
+          .catch(console.debug);
       }
     }
   }
@@ -399,7 +368,7 @@
     currentGamemode = sessionStorage.getItem('scsGamemode');
     const gamemodeInput = document.getElementById('scsGamemode');
     gamemodeInput.value = currentGamemode || 'None';
-    gamemodeInput.addEventListener('change', e => {
+    gamemodeInput.addEventListener('change', (e) => {
       sessionStorage.setItem('scsGamemode', e.target.value);
       currentGamemode = e.target.value;
     });
@@ -415,8 +384,8 @@
     brushColors = document.querySelectorAll('[data-color]');
     brushSizes = document.querySelectorAll('[data-size]');
 
-    sizeInput.addEventListener('change', e => (settings.scsBrushSize = e.target.value));
-    colorInput.addEventListener('change', e => (settings.scsBrushColor = e.target.value));
+    sizeInput.addEventListener('change', (e) => (settings.scsBrushSize = e.target.value));
+    colorInput.addEventListener('change', (e) => (settings.scsBrushColor = e.target.value));
   }
 
   function selectBrushSize(e) {
@@ -506,7 +475,7 @@
     $(hatchingTool.firstChild).tooltip();
 
     // onClick logic
-    hatchingTool.addEventListener('click', e => {
+    hatchingTool.addEventListener('click', () => {
       hatchingTool.classList.toggle('scsToolActive');
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (hatchetAnchor.x && hatchetAnchor.y) {
@@ -523,7 +492,7 @@
     });
 
     // Hatchet functionality
-    document.addEventListener('mousedown', e => {
+    document.addEventListener('mousedown', (e) => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
           isHatcheting = true;
@@ -537,7 +506,7 @@
       }
     });
 
-    document.addEventListener('mouseup', e => {
+    document.addEventListener('mouseup', (e) => {
       if (hatchingTool.classList.contains('scsToolActive')) {
         if (e.button == 0) {
           isHatcheting = false;
@@ -584,7 +553,7 @@
 
     // Rainbow Interval for when tool is clicked
     let rainbowInterval;
-    rainbowTool.addEventListener('click', e => {
+    rainbowTool.addEventListener('click', (e) => {
       rainbowTool.classList.toggle('scsToolActive');
       if (rainbowTool.classList.contains('scsToolActive')) {
         rainbowInterval = setInterval(rainbowCycleTick, settings.scsRainbowSpeed);
@@ -598,14 +567,17 @@
     // Rainbow mode select
     const rainbowSelect = document.getElementById('scsRainbowMode');
     rainbowSelect.value = settings.scsRainbowMode || '1-cycle';
-    rainbowSelect.addEventListener('change', e => (settings.scsRainbowMode = e.target.value));
+    rainbowSelect.addEventListener('change', (e) => (settings.scsRainbowMode = e.target.value));
 
     // Rainbow interval input
     const rainbowSpeedInput = document.getElementById('scsRainbowSpeed');
     settings.scsRainbowSpeed = parseInt(settings.scsRainbowSpeed) || 50;
     rainbowSpeedInput.value = settings.scsRainbowSpeed;
-    rainbowSpeedInput.addEventListener('change', e => (settings.scsRainbowSpeed = e.target.value));
-    rainbowSpeedInput.addEventListener('change', e => {
+    rainbowSpeedInput.addEventListener(
+      'change',
+      (e) => (settings.scsRainbowSpeed = e.target.value)
+    );
+    rainbowSpeedInput.addEventListener('change', (e) => {
       settings.scsRainbowSpeed = parseInt(e.target.value);
       if (rainbowInterval) {
         clearInterval(rainbowInterval);
@@ -623,7 +595,7 @@
   }
 
   function initChatBlacklist() {
-    document.addEventListener('click', e => {
+    document.addEventListener('click', (e) => {
       if (e.target.classList.contains('name') && e.target.closest('#containerGamePlayers')) {
         e.stopImmediatePropagation();
         const name = e.target.innerText;
@@ -666,11 +638,11 @@
   }
 
   function initGameObserver() {
-    const gameObserver = new MutationObserver(mutations => {
+    const gameObserver = new MutationObserver((mutations) => {
       const screenGame = mutations[0].target;
       if (screenGame.style.display !== 'none') {
         const visibleDrawer = Array.from(document.querySelectorAll('.drawing')).find(
-          div => div.offsetParent
+          (div) => div.offsetParent
         );
 
         if (visibleDrawer) {
@@ -704,7 +676,7 @@
           chatInput.addEventListener('keyup', oneshot);
         }
 
-        const drawingObserver = new MutationObserver(mutations => {
+        const drawingObserver = new MutationObserver((mutations) => {
           const overlay = mutations[0].target;
           if (overlay.style.display !== 'none') {
             if (currentGamemode === 'Deaf') {
@@ -730,20 +702,19 @@
       attributeFilter: ['style'],
     });
 
-    const currentDrawerObserver = new MutationObserver(mutations => {
+    const currentDrawerObserver = new MutationObserver((mutations) => {
       const drawer = mutations[0].target;
 
       if (drawer.style.display !== 'none') {
-        solvedWord = '';
         setTimeout(() => {
           artist = drawer.closest('.player').querySelector('.name').innerHTML;
         }, 3000);
       }
     });
 
-    const playersObserver = new MutationObserver(mutations => {
+    const playersObserver = new MutationObserver((mutations) => {
       if (mutations.length > 1) {
-        document.querySelectorAll('.drawing').forEach(div => {
+        document.querySelectorAll('.drawing').forEach((div) => {
           currentDrawerObserver.observe(div, {
             attributes: true,
             attributeFilter: ['style'],
@@ -762,18 +733,13 @@
       childList: true,
     });
 
-    const chatObserver = new MutationObserver(mutations => {
-      mutations.forEach(change => {
-        change.addedNodes.forEach(msg => {
+    const chatObserver = new MutationObserver((mutations) => {
+      mutations.forEach((change) => {
+        change.addedNodes.forEach((msg) => {
           const sender = msg.firstChild.innerText;
           const senderParsed = sender.slice(0, -2);
           if (sender.endsWith(': ') && playerBlacklist.includes(senderParsed)) {
             msg.setAttribute('scsMuteSender', senderParsed);
-          }
-
-          const wordMatch = sender.match(/The word was '(?<word>.*)'/);
-          if (wordMatch) {
-            solvedWord = wordMatch.groups.word;
           }
         });
       });
@@ -802,7 +768,6 @@
   function init() {
     canvas = document.getElementById('canvasGame');
     currentWord = document.getElementById('currentWord');
-    timer = document.getElementById('timer');
     chatInput = document.getElementById('inputChat');
 
     currentWordSize = document.createElement('div');
@@ -833,7 +798,7 @@
     initChatBlacklist();
     initGameObserver();
 
-    document.addEventListener('keydown', e => {
+    document.addEventListener('keydown', (e) => {
       if (document.activeElement.tagName !== 'INPUT') {
         focusChat(e);
         toggleHotkeys(e);
@@ -848,7 +813,7 @@
       }
     });
 
-    canvas.addEventListener('mousedown', e => {
+    canvas.addEventListener('mousedown', (e) => {
       if (e.button == 1 && !scsElements.hatchingTool.classList.contains('scsToolActive')) {
         const rect = canvas.getBoundingClientRect();
         const color = Uint32Array.from(

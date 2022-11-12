@@ -1,31 +1,36 @@
-# skribbl-community-scripts
+# Skribbl Community Scripts
 
-A collection of user scripts for skribbl.io
+A compilation of userscripts for Skribbl.io  
+
+Skribbl Community Scripts is not affiliated with [skribbl.io](https://skribbl.io/). This project is no longer maintained. It supports only archived versions of the site from before November 9th, 2022. Please see my new project [Spelln't](https://gitlab.com/sbarrack/spellnt) instead which will eventually include these features and more.  
 
 ## Installation
 
 1. Install Tampermonkey browser extension
-2. Paste "index.js" into a new script
-3. Turn on automatic updates
+2. Paste `index.js` into a new Tampermonkey script
 
 ## Usage
 
-- Above the chat pane on the game page
-  - Brush mode changes which colors the magic brush uses
-    - 1-cycle: Alternates between the light and dark version of a single color
-    - 2-cycle: Alternates between your primary and secondary color selection (press "T" to switch your primary and secondary colors)
-    - Light: Cycles through the top row of colors in the pallet
-    - Dark: Cycles through the bottom row of colors in the pallet
-    - All: Cycles through the full pallet
-    - Grey: Cycles through the 4, leftmost colors of the pallet
-  - "Speed (ms)" changes the rate at which the hatching tool draws lines and the magic brush changes color. Smaller values equals faster switching
-- For usage of the new tools added to the toolbar on the bottom of the game page, hover over the icon for a tooltip with instructions
+- Secondary color slot
+  - Pressing `T` swaps your primary and secondary color
+- Brush modes
+  - 1-cycle: Cycles light/dark on one color
+  - 2-cycle: Alternates between your primary and secondary color selection
+  - Light: Cycles through the top row of colors
+  - Dark: Cycles through the bottom row of colors
+  - All: Cycles through the full pallet
+  - Grey: Cycles through the four left-most colors of the pallet
+- `Speed (ms)` changes the hatching tool and magic brush frequency
+  - A smaller period equals faster switching
+- Hover over the icons in the bottom toolbar for tooltips
 
-## Attributions
+## Credits
+
+Thanks to these lovely folks for writing parts of the code and inspiring me to improve the game 😄
 
 - Ente
   - Image poster
-- Jess
+- Jason "Jess 🎷"
   - Image poster
   - Code cleanup
 - Photon
@@ -34,6 +39,6 @@ A collection of user scripts for skribbl.io
   - Magic brush
   - Blind gamemode
   - Hatching brush
-- Tobeh
+- [Tobeh](https://typo.rip/)
   - Color picking
   - Custom palettes
